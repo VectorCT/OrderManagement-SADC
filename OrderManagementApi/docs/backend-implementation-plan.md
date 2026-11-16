@@ -35,7 +35,13 @@ Before merge or commit, confirm:
 - SQL Server connection config is in `appsettings*.json`
 - the project builds successfully with `dotnet build`
 
-## 5. Future implementation sequence
+## 5. Migration milestone status
+The migration work on this branch includes the initial schema setup for the DataAccess model:
+- `InitialCreate` has been generated and validated against the current DbContext
+- the project includes Identity tables and the core business tables required by the backend plan
+- migration rollout and rollback notes are documented in `docs/MIGRATIONS.md`
+
+## 6. Future implementation sequence
 1. Confirm the DataAccess layer model set and configs match the domain requirements.
 2. Add service interfaces and implementations.
 3. Add FluentValidation rules for request shape.
@@ -44,9 +50,10 @@ Before merge or commit, confirm:
 6. Generate migrations and validate against SQL Server.
 7. Run integration tests and verify the end-to-end order flow.
 
-## 6. Commit gate
+## 7. Commit gate
 No backend feature branch should be committed without verifying:
 - build passes
 - data model matches the approved plan
 - configuration files are scoped to the correct entity
 - Identity and EF integration are still working together
+- migration scripts and rollback steps are documented and tested
