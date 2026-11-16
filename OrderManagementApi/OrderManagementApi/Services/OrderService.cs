@@ -2,20 +2,33 @@ using System.Text;
 using CSharpFunctionalExtensions;
 using DataAccessLayer.Contexts;
 using DataAccessLayer.Models;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
+using OrderManagementApi.Services.Validation;
 
 namespace OrderManagementApi.Services;
 
-public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy currencyPolicy, IOrderStateMachine stateMachine) : IOrderService
+public sealed class OrderService(
+    AppDbContext dbContext,
+    ISadcCurrencyPolicy currencyPolicy,
+    IOrderStateMachine stateMachine,
+    IValidator<CreateOrderRequest> validator) : IOrderService
 {
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ISadcCurrencyPolicy _currencyPolicy = currencyPolicy;
     private readonly IOrderStateMachine _stateMachine = stateMachine;
+    private readonly IValidator<CreateOrderRequest> _validator = validator;
 
     public async Task<Result<OrderDto>> CreateAsync(CreateOrderRequest request, CancellationToken ct = default)
     {
+        var validationResult = await _validator.ValidateAsync(request, ct);
+        if (!validationResult.IsValid)
+        {
+            return Result.Failure<OrderDto>(validationResult.ToErrorMessage());
+        }
+
         var customer = await _dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == request.CustomerId, ct);
         if (customer is null)
         {
@@ -26,11 +39,6 @@ public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy cur
         if (!_currencyPolicy.IsCurrencyAllowed(customer.CountryCode, currencyCode))
         {
             return Result.Failure<OrderDto>("Currency is not valid for the customer's country.");
-        }
-
-        if (request.LineItems is null || request.LineItems.Count == 0)
-        {
-            return Result.Failure<OrderDto>("Order must contain at least one line item.");
         }
 
         var order = new Order
@@ -47,16 +55,6 @@ public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy cur
 
         foreach (var item in request.LineItems)
         {
-            if (item.Quantity <= 0)
-            {
-                return Result.Failure<OrderDto>("Line item quantity must be greater than zero.");
-            }
-
-            if (item.UnitPrice < 0)
-            {
-                return Result.Failure<OrderDto>("Line item unit price cannot be negative.");
-            }
-
             order.LineItems.Add(new OrderLineItem
             {
                 Id = Guid.NewGuid(),
