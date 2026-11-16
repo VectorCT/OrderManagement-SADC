@@ -2,33 +2,23 @@ using System.Text;
 using CSharpFunctionalExtensions;
 using DataAccessLayer.Contexts;
 using DataAccessLayer.Models;
-using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
-using OrderManagementApi.Services.Validation;
 
 namespace OrderManagementApi.Services;
 
 public sealed class OrderService(
     AppDbContext dbContext,
     ISadcCurrencyPolicy currencyPolicy,
-    IOrderStateMachine stateMachine,
-    IValidator<CreateOrderRequest> validator) : IOrderService
+    IOrderStateMachine stateMachine) : IOrderService
 {
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ISadcCurrencyPolicy _currencyPolicy = currencyPolicy;
     private readonly IOrderStateMachine _stateMachine = stateMachine;
-    private readonly IValidator<CreateOrderRequest> _validator = validator;
 
     public async Task<Result<OrderDto>> CreateAsync(CreateOrderRequest request, CancellationToken ct = default)
     {
-        var validationResult = await _validator.ValidateAsync(request, ct);
-        if (!validationResult.IsValid)
-        {
-            return Result.Failure<OrderDto>(validationResult.ToErrorMessage());
-        }
-
         var customer = await _dbContext.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == request.CustomerId, ct);
         if (customer is null)
         {
@@ -122,11 +112,6 @@ public sealed class OrderService(
 
     public async Task<Result<OrderDto>> TransitionStatusAsync(Guid id, OrderStatus targetStatus, string idempotencyKey, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(idempotencyKey))
-        {
-            return Result.Failure<OrderDto>("Idempotency key is required.");
-        }
-
         var order = await _dbContext.Orders
             .Include(o => o.LineItems)
             .FirstOrDefaultAsync(o => o.Id == id, ct);

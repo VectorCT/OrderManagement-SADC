@@ -10,9 +10,10 @@ This checklist tracks the recommended implementation sequence in the [backend im
 - [x] Add the SADC currency validation policy and order state machine.
 - [x] Keep business rules in services, not entity models.
 
-## 2. Validation and DTO contracts — Complete
+## 2. Validation and DTO contracts — In progress
 
-- [x] Add FluentValidation for request shape and static business rules.
+- [x] Define FluentValidation rules for request shape and static constraints.
+- [ ] Invoke request validators at the customer and order API endpoints.
 - [x] Separate DTOs from persistence models.
 - [x] Validate customer existence, currency-country pairing, and status transitions in the service layer.
 

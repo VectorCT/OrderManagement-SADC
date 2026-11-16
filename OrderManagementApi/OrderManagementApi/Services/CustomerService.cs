@@ -1,30 +1,19 @@
 using CSharpFunctionalExtensions;
 using DataAccessLayer.Contexts;
 using DataAccessLayer.Models;
-using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OrderManagementApi.Extensions;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
-using OrderManagementApi.Services.Validation;
 
 namespace OrderManagementApi.Services;
 
-public sealed class CustomerService(
-    AppDbContext dbContext,
-    IValidator<CreateCustomerRequest> validator) : ICustomerService
+public sealed class CustomerService(AppDbContext dbContext) : ICustomerService
 {
     private readonly AppDbContext _dbContext = dbContext;
-    private readonly IValidator<CreateCustomerRequest> _validator = validator;
 
     public async Task<Result<CustomerDto>> CreateAsync(CreateCustomerRequest request, CancellationToken ct = default)
     {
-        var validationResult = await _validator.ValidateAsync(request, ct);
-        if (!validationResult.IsValid)
-        {
-            return Result.Failure<CustomerDto>(validationResult.ToErrorMessage());
-        }
-
         var countryCode = request.CountryCode.Trim();
         var customer = new Customer
         {
