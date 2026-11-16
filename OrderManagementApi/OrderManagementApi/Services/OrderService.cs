@@ -8,7 +8,10 @@ using OrderManagementApi.Services.Models;
 
 namespace OrderManagementApi.Services;
 
-public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy currencyPolicy, IOrderStateMachine stateMachine) : IOrderService
+public sealed class OrderService(
+    AppDbContext dbContext,
+    ISadcCurrencyPolicy currencyPolicy,
+    IOrderStateMachine stateMachine) : IOrderService
 {
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ISadcCurrencyPolicy _currencyPolicy = currencyPolicy;
@@ -28,11 +31,6 @@ public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy cur
             return Result.Failure<OrderDto>("Currency is not valid for the customer's country.");
         }
 
-        if (request.LineItems is null || request.LineItems.Count == 0)
-        {
-            return Result.Failure<OrderDto>("Order must contain at least one line item.");
-        }
-
         var order = new Order
         {
             Id = Guid.NewGuid(),
@@ -47,16 +45,6 @@ public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy cur
 
         foreach (var item in request.LineItems)
         {
-            if (item.Quantity <= 0)
-            {
-                return Result.Failure<OrderDto>("Line item quantity must be greater than zero.");
-            }
-
-            if (item.UnitPrice < 0)
-            {
-                return Result.Failure<OrderDto>("Line item unit price cannot be negative.");
-            }
-
             order.LineItems.Add(new OrderLineItem
             {
                 Id = Guid.NewGuid(),
@@ -124,11 +112,6 @@ public sealed class OrderService(AppDbContext dbContext, ISadcCurrencyPolicy cur
 
     public async Task<Result<OrderDto>> TransitionStatusAsync(Guid id, OrderStatus targetStatus, string idempotencyKey, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(idempotencyKey))
-        {
-            return Result.Failure<OrderDto>("Idempotency key is required.");
-        }
-
         var order = await _dbContext.Orders
             .Include(o => o.LineItems)
             .FirstOrDefaultAsync(o => o.Id == id, ct);

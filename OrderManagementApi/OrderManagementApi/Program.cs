@@ -1,9 +1,11 @@
 using DataAccessLayer.Contexts;
 using DataAccessLayer.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OrderManagementApi.Services;
 using OrderManagementApi.Services.Interfaces;
+using OrderManagementApi.Services.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +20,7 @@ builder.Services.AddSingleton<ISadcCurrencyPolicy, SadcCurrencyPolicy>();
 builder.Services.AddSingleton<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

@@ -14,17 +14,7 @@ public sealed class CustomerService(AppDbContext dbContext) : ICustomerService
 
     public async Task<Result<CustomerDto>> CreateAsync(CreateCustomerRequest request, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            return Result.Failure<CustomerDto>("Customer name is required.");
-        }
-
         var countryCode = request.CountryCode.Trim();
-        if (string.IsNullOrWhiteSpace(countryCode) || countryCode.Length != 2)
-        {
-            return Result.Failure<CustomerDto>("Country code must be a valid ISO 3166-1 alpha-2 code.");
-        }
-
         var customer = new Customer
         {
             Id = Guid.NewGuid(),
