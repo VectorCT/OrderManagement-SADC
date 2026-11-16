@@ -13,16 +13,16 @@ This checklist tracks the recommended implementation sequence in the [backend im
 ## 2. Validation and DTO contracts — In progress
 
 - [x] Define FluentValidation rules for request shape and static constraints.
-- [ ] Invoke request validators at the customer and order API endpoints.
+- [x] Invoke request validators at the customer and order API endpoints.
 - [x] Separate DTOs from persistence models.
 - [x] Validate customer existence, currency-country pairing, and status transitions in the service layer.
 
 ## 3. API endpoints and auth — In progress
 
-- [ ] Implement thin controllers for customers and orders.
-- [ ] Add JWT/role policy configuration for `Orders.Read`, `Orders.Write`, and `Orders.Admin`.
-- [ ] Add secure defaults and problem details.
-- [ ] Apply consistent pagination standards to the API.
+- [x] Implement thin controllers for customers and orders.
+- [x] Add JWT/role policy configuration for `Orders.Read`, `Orders.Write`, and `Orders.Admin`.
+- [x] Add secure error defaults and consistent error response envelopes.
+- [x] Apply consistent one-based pagination with bounded page sizes to the API.
 
 ## 4. Messaging and worker flow — Not started
 
@@ -34,11 +34,11 @@ This checklist tracks the recommended implementation sequence in the [backend im
 
 - [x] Add unit tests for request validation.
 - [ ] Add unit tests for SADC rules and transition logic.
-- [ ] Add integration tests for endpoints and database behavior.
+- [x] Add integration tests for endpoint routes, response envelopes, validation boundaries, authorization, and status codes.\r\n- [ ] Add integration tests for database behavior.
 - [ ] Add idempotency tests for status update replay and conflict handling.
 
 ## 6. DevOps and project docs — In progress
 
 - [ ] Add a CI pipeline and Docker Compose setup.
-- [ ] Add Postman or `.http` examples for the customer and order API.
+- [x] Add `.http` examples for the customer and order API.
 - [ ] Prepare the README and `ANSWERS.md` for the final assessment submission.

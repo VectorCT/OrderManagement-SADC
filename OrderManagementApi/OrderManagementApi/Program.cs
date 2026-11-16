@@ -1,8 +1,19 @@
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json.Serialization;
 using DataAccessLayer.Contexts;
 using DataAccessLayer.Models;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using OrderManagementApi.Contracts;
+using OrderManagementApi.Filters;
+using OrderManagementApi.Middleware;
 using OrderManagementApi.Services;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Validation;
@@ -21,12 +32,135 @@ builder.Services.AddSingleton<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
+builder.Services.AddScoped<FluentValidationActionFilter>();
 
-builder.Services.AddControllers();
+var jwtConfiguration = builder.Configuration.GetSection("Jwt");
+var issuer = jwtConfiguration["Issuer"];
+var audience = jwtConfiguration["Audience"];
+var signingKey = jwtConfiguration["SigningKey"];
+if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience) ||
+    string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32)
+{
+    throw new InvalidOperationException(
+        "JWT issuer, audience, and a signing key of at least 32 bytes must be configured using a trusted configuration provider.");
+}
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+            RequireSignedTokens = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+            RoleClaimType = ClaimTypes.Role
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(ApiResponse.Create(
+                    StatusCodes.Status401Unauthorized,
+                    "Authentication is required.",
+                    null,
+                    context.HttpContext), context.HttpContext.RequestAborted);
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsJsonAsync(ApiResponse.Create(
+                    StatusCodes.Status403Forbidden,
+                    "You are not authorized to perform this operation.",
+                    null,
+                    context.HttpContext), context.HttpContext.RequestAborted);
+            }
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Orders.Read", policy => policy.RequireAssertion(context =>
+        HasPermission(context.User, "Orders.Read") || HasPermission(context.User, "Orders.Admin")));
+    options.AddPolicy("Orders.Write", policy => policy.RequireAssertion(context =>
+        HasPermission(context.User, "Orders.Write") || HasPermission(context.User, "Orders.Admin")));
+    options.AddPolicy("Orders.Admin", policy => policy.RequireAssertion(context =>
+        HasPermission(context.User, "Orders.Admin")));
+});
+
+builder.Services.AddControllers(options => options.Filters.AddService<FluentValidationActionFilter>())
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors.Select(error =>
+                    string.IsNullOrWhiteSpace(error.ErrorMessage) ? "The supplied value is invalid." : error.ErrorMessage).ToArray());
+        var response = ApiResponse.Create(
+            StatusCodes.Status400BadRequest,
+            "Request binding failed.",
+            errors,
+            context.HttpContext);
+        return new BadRequestObjectResult(response);
+    };
+});
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Supply a JWT issued for the configured issuer and audience."
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecurityScheme
+        {
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+        }] = Array.Empty<string>()
+    });
+});
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages(async statusContext =>
+{
+    var httpContext = statusContext.HttpContext;
+    var statusCode = httpContext.Response.StatusCode;
+    var message = statusCode switch
+    {
+        StatusCodes.Status404NotFound => "The requested resource was not found.",
+        StatusCodes.Status405MethodNotAllowed => "The requested method is not allowed.",
+        _ => "The request could not be completed."
+    };
+    await httpContext.Response.WriteAsJsonAsync(
+        ApiResponse.Create(statusCode, message, null, httpContext),
+        httpContext.RequestAborted);
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -37,7 +171,12 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
+
+static bool HasPermission(ClaimsPrincipal user, string permission) =>
+    user.IsInRole("Admin") || user.IsInRole("Orders.Admin") ||
+    user.IsInRole(permission) || user.HasClaim("permission", permission);
+
+public partial class Program { }

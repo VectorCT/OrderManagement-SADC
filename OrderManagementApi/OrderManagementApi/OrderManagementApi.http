@@ -1,6 +1,58 @@
 @OrderManagementApi_HostAddress = http://localhost:5145
+@jwt = replace-with-a-token-issued-by-your-configured-identity-provider
+@customerId = 11111111-1111-1111-1111-111111111111
+@orderId = 22222222-2222-2222-2222-222222222222
 
-GET {{OrderManagementApi_HostAddress}}/weatherforecast/
+### Search customers (requires Orders.Read)
+GET {{OrderManagementApi_HostAddress}}/api/customers?search=customer&page=1&pageSize=20
+Authorization: Bearer {{jwt}}
 Accept: application/json
 
-###
+### Get customer (requires Orders.Read; change ID for not-found response)
+GET {{OrderManagementApi_HostAddress}}/api/customers/{{customerId}}
+Authorization: Bearer {{jwt}}
+Accept: application/json
+
+### Create customer (requires Orders.Write)
+POST {{OrderManagementApi_HostAddress}}/api/customers
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "name": "Example Customer",
+  "email": "customer@example.com",
+  "countryCode": "ZA"
+}
+
+### List orders (requires Orders.Read)
+GET {{OrderManagementApi_HostAddress}}/api/orders?customerId={{customerId}}&status=Pending&page=1&pageSize=20&sort=date
+Authorization: Bearer {{jwt}}
+Accept: application/json
+
+### Get order (requires Orders.Read)
+GET {{OrderManagementApi_HostAddress}}/api/orders/{{orderId}}
+Authorization: Bearer {{jwt}}
+Accept: application/json
+
+### Create order (requires Orders.Write)
+POST {{OrderManagementApi_HostAddress}}/api/orders
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "customerId": "{{customerId}}",
+  "currencyCode": "ZAR",
+  "lineItems": [
+    { "productSku": "SKU-001", "quantity": 2, "unitPrice": 12.50 }
+  ]
+}
+
+### Change order status (requires Orders.Admin and Idempotency-Key)
+PUT {{OrderManagementApi_HostAddress}}/api/orders/{{orderId}}/status
+Authorization: Bearer {{jwt}}
+Idempotency-Key: status-transition-example-001
+Content-Type: application/json
+
+{
+  "status": "Paid"
+}
