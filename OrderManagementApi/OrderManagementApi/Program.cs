@@ -52,6 +52,7 @@ builder.Services.AddScoped<IMessagingDiagnosticsService, MessagingDiagnosticsSer
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IRoleManagementService, RoleManagementService>();
+builder.Services.AddScoped<IAdminUserManagementService, AdminUserManagementService>();
 builder.Services.AddScoped<ApplicationDataSeeder>();
 builder.Services.AddHostedService<OrderCreatedOutboxPublisher>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();

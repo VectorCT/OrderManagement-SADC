@@ -89,6 +89,28 @@ public sealed class RoleManagementIntegrationTests
         Assert.Equal(HttpStatusCode.OK, userRolesResponse.StatusCode);
         Assert.Empty((await ReadEnvelope(userRolesResponse, 200)).GetProperty("results").EnumerateArray());
 
+        var usersResponse = await adminClient.GetAsync("/api/admin/users?page=1&pageSize=20");
+        Assert.Equal(HttpStatusCode.OK, usersResponse.StatusCode);
+        var listedUsers = (await ReadEnvelope(usersResponse, 200)).GetProperty("results").GetProperty("items");
+        var listedMember = listedUsers.EnumerateArray().Single(user => user.GetProperty("id").GetString() == memberUserId);
+        Assert.Empty(listedMember.GetProperty("roles").EnumerateArray());
+
+        var createUserResponse = await adminClient.PostAsync(
+            "/api/admin/users",
+            JsonContent(new { firstName = "Created", lastName = "By Admin", email = "admin-created@example.com", password }));
+        Assert.Equal(HttpStatusCode.Created, createUserResponse.StatusCode);
+        var createdUser = (await ReadEnvelope(createUserResponse, 201)).GetProperty("results");
+        var createdUserId = createdUser.GetProperty("id").GetString()!;
+        Assert.Empty(createdUser.GetProperty("roles").EnumerateArray());
+
+        var updateUserResponse = await adminClient.PutAsync(
+            $"/api/admin/users/{memberUserId}",
+            JsonContent(new { firstName = "Updated", lastName = "Member", email = "updated-member@example.com" }));
+        Assert.Equal(HttpStatusCode.OK, updateUserResponse.StatusCode);
+        Assert.Equal(
+            "updated-member@example.com",
+            (await ReadEnvelope(updateUserResponse, 200)).GetProperty("results").GetProperty("email").GetString());
+
         var assignResponse = await adminClient.PostAsync(
             $"/api/roles/users/{memberUserId}",
             JsonContent(new { roles = new[] { "Orders.Read", "Orders.Write" } }));
@@ -105,18 +127,27 @@ public sealed class RoleManagementIntegrationTests
             new[] { "Orders.Read", "Orders.Write" },
             updatedRoles.GetProperty("results").EnumerateArray().Select(role => role.GetString()).ToArray());
 
+        var deleteUserResponse = await adminClient.DeleteAsync($"/api/admin/users/{createdUserId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteUserResponse.StatusCode);
+        var deleteAdminResponse = await adminClient.DeleteAsync($"/api/admin/users/{adminUserId}");
+        Assert.Equal(HttpStatusCode.Conflict, deleteAdminResponse.StatusCode);
+        await ReadEnvelope(deleteAdminResponse, 409);
+
         var invalidRoleResponse = await adminClient.PostAsync(
             $"/api/roles/users/{memberUserId}",
             JsonContent(new { roles = new[] { "SuperUser" } }));
         Assert.Equal(HttpStatusCode.BadRequest, invalidRoleResponse.StatusCode);
         await ReadEnvelope(invalidRoleResponse, 400);
 
-        var memberToken = await Login(client, "member@example.com", password);
+        var memberToken = await Login(client, "updated-member@example.com", password);
         var memberClient = factory.CreateClient();
         memberClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", memberToken);
         var forbiddenResponse = await memberClient.GetAsync("/api/roles");
         Assert.Equal(HttpStatusCode.Forbidden, forbiddenResponse.StatusCode);
         await ReadEnvelope(forbiddenResponse, 403);
+        var forbiddenUsersResponse = await memberClient.GetAsync("/api/admin/users");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenUsersResponse.StatusCode);
+        await ReadEnvelope(forbiddenUsersResponse, 403);
     }
 
     private static async Task<string> Login(HttpClient client, string email, string password)

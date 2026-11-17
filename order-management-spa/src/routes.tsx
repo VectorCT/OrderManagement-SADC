@@ -9,6 +9,10 @@ import { OrderDetailPage } from './features/orders/OrderDetailPage';
 import { CreateOrderPage } from './features/orders/CreateOrderPage';
 import { CreateCustomerPage } from './features/customers/CreateCustomerPage';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary';
+import { AdminRouteGuard } from './auth/AdminRouteGuard';
+import { AdminUsersPage } from './features/admin/AdminUsersPage';
+import { AdminUserFormPage } from './features/admin/AdminUserFormPage';
+import { MessagingDiagnosticsPage } from './features/admin/MessagingDiagnosticsPage';
 
 export const router = createBrowserRouter([
   {
@@ -29,6 +33,15 @@ export const router = createBrowserRouter([
           { path: '/orders', element: <OrdersPage /> },
           { path: '/orders/new', element: <CreateOrderPage /> },
           { path: '/orders/:id', element: <OrderDetailPage /> },
+          {
+            element: <AdminRouteGuard />,
+            children: [
+              { path: '/admin/users', element: <AdminUsersPage /> },
+              { path: '/admin/users/new', element: <AdminUserFormPage /> },
+              { path: '/admin/users/:userId/edit', element: <AdminUserFormPage /> },
+              { path: '/admin/messaging', element: <MessagingDiagnosticsPage /> },
+            ],
+          },
         ],
       },
       { path: '*', element: <div>Page not found</div> },

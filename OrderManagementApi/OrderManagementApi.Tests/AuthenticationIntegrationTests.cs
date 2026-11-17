@@ -40,6 +40,7 @@ public sealed class AuthenticationIntegrationTests(AuthApiFactory factory) : ICl
         var token = login.GetProperty("results").GetProperty("accessToken").GetString();
         Assert.False(string.IsNullOrWhiteSpace(token));
         Assert.Equal("Bearer", login.GetProperty("results").GetProperty("tokenType").GetString());
+        Assert.Empty(login.GetProperty("results").GetProperty("roles").EnumerateArray());
 
         var authenticatedClient = factory.CreateClient();
         authenticatedClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
