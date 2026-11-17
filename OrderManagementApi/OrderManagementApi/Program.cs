@@ -44,6 +44,8 @@ builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IRoleManagementService, RoleManagementService>();
+builder.Services.AddScoped<ApplicationDataSeeder>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
 
 var jwtConfiguration = builder.Configuration.GetSection("Jwt");
@@ -182,6 +184,15 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+if (app.Configuration.GetValue<bool>("SeedData:Enabled"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<ApplicationDataSeeder>();
+    var adminEmail = app.Configuration["SeedData:AdminEmail"] ?? "ctshabalala89@gmail.com";
+    var seedOrders = app.Configuration.GetValue("SeedData:SeedOrders", true);
+    await seeder.SeedAsync(adminEmail, seedOrders, app.Lifetime.ApplicationStopping);
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages(async statusContext =>
