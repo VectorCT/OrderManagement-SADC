@@ -65,7 +65,7 @@ export function CustomersPage() {
         <Link className={styles.primaryButton} to="/customers/new">Add new customer</Link>
       </div>
       <div role="status" aria-live="polite">{feedback}</div>
-      <div className={`${styles.filterCard} ${styles.customerFilters}`}>
+      <div className={`${styles.filterCard} ${styles.customerFilters} ${styles.formField}`}>
         <label htmlFor="customer-search">
           Search
           <input id="customer-search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} />
