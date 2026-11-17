@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
 import { RouteGuard } from './auth/RouteGuard';
 import { LoginPage } from './auth/LoginPage';
+import { CustomersPage } from './features/customers/CustomersPage';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
@@ -17,7 +18,7 @@ export const router = createBrowserRouter([
         element: <RouteGuard />,
         children: [
           { path: '/', element: <div>Customers and orders</div> },
-          { path: '/customers', element: <div>Customers</div> },
+          { path: '/customers', element: <CustomersPage /> },
           { path: '/orders', element: <div>Orders</div> },
           { path: '/orders/:id', element: <div>Order details</div> },
         ],

@@ -17,10 +17,10 @@ This checklist tracks the recommended implementation sequence in the [frontend i
 
 ## Customers
 
-- [ ] Search is debounced and search/page/page size are URL-synced; page size is capped at 100.
-- [ ] Loading, empty, retryable error, and populated states are covered.
-- [ ] Customer creation validates name, email, and one of the 16 SADC countries.
-- [ ] Successful creation invalidates customer queries and gives accessible feedback.
+- [x] Search is debounced and search/page/page size are URL-synced; page size is capped at 100.
+- [x] Loading, empty, retryable error, and populated states are covered.
+- [x] Customer creation validates name, email, and one of the 16 SADC countries.
+- [x] Successful creation invalidates customer queries and gives accessible feedback.
 
 ## Orders
 
