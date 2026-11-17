@@ -3,6 +3,7 @@ import App from './App';
 import { RouteGuard } from './auth/RouteGuard';
 import { LoginPage } from './auth/LoginPage';
 import { CustomersPage } from './features/customers/CustomersPage';
+import { OrdersPage } from './features/orders/OrdersPage';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
@@ -19,7 +20,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <div>Customers and orders</div> },
           { path: '/customers', element: <CustomersPage /> },
-          { path: '/orders', element: <div>Orders</div> },
+          { path: '/orders', element: <OrdersPage /> },
           { path: '/orders/:id', element: <div>Order details</div> },
         ],
       },

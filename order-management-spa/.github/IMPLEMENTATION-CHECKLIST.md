@@ -24,11 +24,11 @@ This checklist tracks the recommended implementation sequence in the [frontend i
 
 ## Orders
 
-- [ ] List filters and sorting are URL-driven; totals use the order currency and server response.
-- [ ] Order creation filters currencies by the selected customer's country.
-- [ ] Line items support add/remove, require at least one row, and validate quantity and unit price.
-- [ ] Estimated totals are explicitly labeled as estimates; server totals are displayed as authoritative.
-- [ ] API validation errors map to the relevant fields; 409 and 422 outcomes are visible.
+- [x] List filters and sorting are URL-driven; totals use the order currency and server response.
+- [x] Order creation filters currencies by the selected customer's country.
+- [x] Line items support add/remove, require at least one row, and validate quantity and unit price.
+- [x] Estimated totals are explicitly labeled as estimates; server totals are displayed as authoritative.
+- [x] API validation errors map to the relevant fields; 409 and 422 outcomes are visible.
 - [ ] Details show customer, status, currency, dates, server totals, and semantic line-item tables.
 - [ ] Only valid status transitions are offered; cancellation requires a native confirmation dialog.
 - [ ] Idempotency keys are stable across retries for one intent and replaced after success or a changed intent.
