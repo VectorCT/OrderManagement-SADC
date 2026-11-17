@@ -15,6 +15,7 @@ public sealed class OrderService(
     ISadcCurrencyPolicy currencyPolicy,
     IOrderStateMachine stateMachine) : IOrderService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ISadcCurrencyPolicy _currencyPolicy = currencyPolicy;
     private readonly IOrderStateMachine _stateMachine = stateMachine;
@@ -121,6 +122,38 @@ public sealed class OrderService(
 
     public async Task<Result<OrderDto>> TransitionStatusAsync(Guid id, OrderStatus targetStatus, string idempotencyKey, CancellationToken ct = default)
     {
+        var scope = $"PUT:/orders/{id}/status";
+        var payload = targetStatus.ToString();
+        var requestHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
+        var existingRecord = await _dbContext.IdempotencyRecords
+            .AsNoTracking()
+            .SingleOrDefaultAsync(record => record.Key == idempotencyKey && record.Scope == scope, ct);
+
+        if (existingRecord is not null)
+        {
+            if (!string.Equals(existingRecord.RequestHash, requestHash, StringComparison.Ordinal))
+            {
+                return Result.Failure<OrderDto>("Idempotency key was already used with a different request.");
+            }
+
+            if (string.IsNullOrWhiteSpace(existingRecord.ResponseBody))
+            {
+                return Result.Failure<OrderDto>("Stored idempotency response could not be replayed.");
+            }
+
+            try
+            {
+                var replay = JsonSerializer.Deserialize<OrderDto>(existingRecord.ResponseBody, JsonOptions);
+                return replay is null
+                    ? Result.Failure<OrderDto>("Stored idempotency response could not be replayed.")
+                    : Result.Success(replay);
+            }
+            catch (JsonException)
+            {
+                return Result.Failure<OrderDto>("Stored idempotency response could not be replayed.");
+            }
+        }
+
         var order = await _dbContext.Orders
             .Include(o => o.LineItems)
             .FirstOrDefaultAsync(o => o.Id == id, ct);
@@ -138,24 +171,23 @@ public sealed class OrderService(
         order.Status = targetStatus;
         order.UpdatedAt = DateTime.UtcNow;
 
-        var payload = idempotencyKey + ":" + targetStatus;
-        var requestHash = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(payload));
+        var response = ToDto(order);
 
         var record = new IdempotencyRecord
         {
             Id = Guid.NewGuid(),
             Key = idempotencyKey,
-            Scope = $"PUT:/orders/{id}/status",
-            RequestHash = Convert.ToHexString(requestHash),
+            Scope = scope,
+            RequestHash = requestHash,
             ResponseStatusCode = 200,
-            ResponseBody = targetStatus.ToString(),
+            ResponseBody = JsonSerializer.Serialize(response, JsonOptions),
             CreatedAt = DateTime.UtcNow
         };
 
         _dbContext.IdempotencyRecords.Add(record);
         await _dbContext.SaveChangesAsync(ct);
 
-        return Result.Success(ToDto(order));
+        return Result.Success(response);
     }
 
     private static OrderDto ToDto(Order order)
