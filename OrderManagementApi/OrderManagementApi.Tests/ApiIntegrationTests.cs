@@ -37,6 +37,22 @@ public sealed class ApiIntegrationTests(ApiFactory factory) : IClassFixture<ApiF
     }
 
     [Fact]
+    public async Task MessagingDiagnostics_RequiresAdminPermission()
+    {
+        var client = factory.CreateClient();
+        var unauthenticated = await client.GetAsync("/api/admin/messaging");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthenticated.StatusCode);
+        await AssertEnvelope(unauthenticated, 401, "/api/admin/messaging");
+
+        SetPermission(client, "Orders.Read");
+        var forbidden = await client.GetAsync("/api/admin/messaging");
+
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        await AssertEnvelope(forbidden, 403, "/api/admin/messaging");
+    }
+
+    [Fact]
     public async Task ReadPolicy_AllowsReadRoleAndReturnsPagedEnvelope()
     {
         factory.CustomerService.Reset();

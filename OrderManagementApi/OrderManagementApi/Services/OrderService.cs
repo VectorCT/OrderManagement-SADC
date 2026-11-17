@@ -1,10 +1,12 @@
 using System.Text;
+using System.Text.Json;
 using CSharpFunctionalExtensions;
 using DataAccessLayer.Contexts;
 using DataAccessLayer.Models;
 using Microsoft.EntityFrameworkCore;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
+using OrderManagement.Messaging.Events;
 
 namespace OrderManagementApi.Services;
 
@@ -35,7 +37,6 @@ public sealed class OrderService(
         {
             Id = Guid.NewGuid(),
             CustomerId = customer.Id,
-            Customer = customer,
             Status = OrderStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             CurrencyCode = currencyCode.ToUpperInvariant(),
@@ -58,6 +59,14 @@ public sealed class OrderService(
         order.RecalculateTotal();
 
         _dbContext.Orders.Add(order);
+        var createdEvent = new OrderCreatedEvent(Guid.NewGuid(), order.Id, order.CreatedAt);
+        _dbContext.OutboxMessages.Add(new OutboxMessage
+        {
+            Id = createdEvent.MessageId,
+            Type = nameof(OrderCreatedEvent),
+            Payload = JsonSerializer.Serialize(createdEvent, new JsonSerializerOptions(JsonSerializerDefaults.Web)),
+            CreatedAt = order.CreatedAt
+        });
         await _dbContext.SaveChangesAsync(ct);
 
         return Result.Success(ToDto(order));

@@ -97,3 +97,8 @@ Content-Type: application/json
 {
   "status": "Paid"
 }
+
+### Messaging and order processing diagnostics (requires Orders.Admin)
+GET {{OrderManagementApi_HostAddress}}/api/admin/messaging
+Authorization: ******
+Accept: application/json

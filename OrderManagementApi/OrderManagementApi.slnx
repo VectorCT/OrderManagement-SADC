@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="DataAccessLayer/DataAccessLayer.csproj" />
+  <Project Path="Messaging/Messaging.csproj" />
+  <Project Path="OrderManagementWorker/OrderManagementWorker.csproj" />
   <Project Path="OrderManagementApi.Tests/OrderManagementApi.Tests.csproj" />
   <Project Path="OrderManagementApi/OrderManagementApi.csproj" />
 </Solution>

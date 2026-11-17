@@ -17,11 +17,17 @@ using OrderManagementApi.Services;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
 using OrderManagementApi.Services.Validation;
+using OrderManagement.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var rabbitMqOptions = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqOptions>() ?? new RabbitMqOptions();
+builder.Services.AddSingleton(rabbitMqOptions);
+builder.Services.AddSingleton<IOrderEventPublisher, RabbitMqOrderEventPublisher>();
+builder.Services.AddSingleton<IRabbitMqQueueInspector, RabbitMqQueueInspector>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -42,10 +48,12 @@ builder.Services.AddSingleton<ISadcCurrencyPolicy, SadcCurrencyPolicy>();
 builder.Services.AddSingleton<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IMessagingDiagnosticsService, MessagingDiagnosticsService>();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IRoleManagementService, RoleManagementService>();
 builder.Services.AddScoped<ApplicationDataSeeder>();
+builder.Services.AddHostedService<OrderCreatedOutboxPublisher>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
 
 var jwtConfiguration = builder.Configuration.GetSection("Jwt");
