@@ -4,6 +4,7 @@ import { RouteGuard } from './auth/RouteGuard';
 import { LoginPage } from './auth/LoginPage';
 import { CustomersPage } from './features/customers/CustomersPage';
 import { OrdersPage } from './features/orders/OrdersPage';
+import { OrderDetailPage } from './features/orders/OrderDetailPage';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
@@ -21,7 +22,7 @@ export const router = createBrowserRouter([
           { path: '/', element: <div>Customers and orders</div> },
           { path: '/customers', element: <CustomersPage /> },
           { path: '/orders', element: <OrdersPage /> },
-          { path: '/orders/:id', element: <div>Order details</div> },
+          { path: '/orders/:id', element: <OrderDetailPage /> },
         ],
       },
       { path: '*', element: <div>Page not found</div> },

@@ -29,10 +29,10 @@ This checklist tracks the recommended implementation sequence in the [frontend i
 - [x] Line items support add/remove, require at least one row, and validate quantity and unit price.
 - [x] Estimated totals are explicitly labeled as estimates; server totals are displayed as authoritative.
 - [x] API validation errors map to the relevant fields; 409 and 422 outcomes are visible.
-- [ ] Details show customer, status, currency, dates, server totals, and semantic line-item tables.
-- [ ] Only valid status transitions are offered; cancellation requires a native confirmation dialog.
-- [ ] Idempotency keys are stable across retries for one intent and replaced after success or a changed intent.
-- [ ] Pending/Paid detail polling refreshes at four-second intervals and stops at terminal status.
+- [x] Details show customer, status, currency, dates, server totals, and semantic line-item tables.
+- [x] Only valid status transitions are offered; cancellation requires a native confirmation dialog.
+- [x] Idempotency keys are stable across retries for one intent and replaced after success or a changed intent.
+- [x] Pending/Paid detail polling refreshes at four-second intervals and stops at terminal status.
 
 ## Quality and delivery
 

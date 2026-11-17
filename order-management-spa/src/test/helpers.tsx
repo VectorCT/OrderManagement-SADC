@@ -16,11 +16,12 @@ export function createTestQueryClient() {
 export function renderWithProviders(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>,
+  initialEntries: string[] = ['/'],
 ) {
   const queryClient = createTestQueryClient();
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>{children}</AuthProvider>
         </QueryClientProvider>
