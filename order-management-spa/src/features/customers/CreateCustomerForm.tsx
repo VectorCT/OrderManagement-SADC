@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { ApiError } from '../../api/client';
 import { createCustomer } from './api';
 import { customerSchema, SADC_COUNTRIES, type CustomerFormData } from './schema';
+import styles from '../workspace.module.css';
 
 export function CreateCustomerForm({ onCreated }: { onCreated: (message: string) => void }) {
   const queryClient = useQueryClient();
@@ -40,28 +41,28 @@ export function CreateCustomerForm({ onCreated }: { onCreated: (message: string)
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} noValidate aria-busy={isSubmitting}>
-      <div>
+    <form className={styles.customerForm} onSubmit={handleSubmit(submit)} noValidate aria-busy={isSubmitting}>
+      <div className={styles.formField}>
         <label htmlFor="customer-name">Name</label>
         <input id="customer-name" {...register('name')} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'customer-name-error' : undefined} />
-        {errors.name && <span id="customer-name-error">{errors.name.message}</span>}
+        {errors.name && <span className={styles.fieldError} id="customer-name-error">{errors.name.message}</span>}
       </div>
-      <div>
+      <div className={styles.formField}>
         <label htmlFor="customer-email">Email</label>
         <input id="customer-email" type="email" {...register('email')} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'customer-email-error' : undefined} />
-        {errors.email && <span id="customer-email-error">{errors.email.message}</span>}
+        {errors.email && <span className={styles.fieldError} id="customer-email-error">{errors.email.message}</span>}
       </div>
-      <div>
+      <div className={styles.formField}>
         <label htmlFor="customer-country">Country</label>
         <select id="customer-country" {...register('countryCode')} aria-invalid={!!errors.countryCode} aria-describedby={errors.countryCode ? 'customer-country-error' : undefined}>
           {SADC_COUNTRIES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
         </select>
-        {errors.countryCode && <span id="customer-country-error">{errors.countryCode.message}</span>}
+        {errors.countryCode && <span className={styles.fieldError} id="customer-country-error">{errors.countryCode.message}</span>}
       </div>
       {mutation.error instanceof ApiError && !mutation.error.details.errors && (
-        <p role="alert">{mutation.error.message}</p>
+        <p className={styles.fieldError} role="alert">{mutation.error.message}</p>
       )}
-      <button type="submit" disabled={isSubmitting}>Create customer</button>
+      <button className={styles.primaryButton} type="submit" disabled={isSubmitting}>Create customer</button>
     </form>
   );
 }

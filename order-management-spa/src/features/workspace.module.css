@@ -77,6 +77,10 @@
   padding: 18px;
 }
 
+.customerFilters {
+  grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr);
+}
+
 .filterCard label,
 .formCard label {
   display: grid;
@@ -180,6 +184,128 @@
   margin-bottom: 20px;
 }
 
+.formCard form {
+  display: grid;
+  gap: 18px;
+}
+
+.customerForm {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.formField {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.formField label {
+  color: #52635e;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.formField input,
+.formField select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #ccd7d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #26394a;
+  padding: 0 12px;
+}
+
+.formField input[aria-invalid='true'],
+.formField select[aria-invalid='true'] {
+  border-color: #c64242;
+}
+
+.fieldError {
+  margin: 0;
+  color: #b12e2e;
+  font-size: 13px;
+}
+
+.customerForm > button,
+.customerForm > [role='alert'] {
+  justify-self: start;
+}
+
+.orderForm {
+  display: grid;
+  gap: 18px;
+}
+
+.orderFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.orderForm h3 {
+  margin: 4px 0 -8px;
+  color: #26394a;
+}
+
+.orderForm fieldset {
+  min-width: 0;
+  border: 1px solid #e1e8e9;
+  border-radius: 10px;
+  background: #fbfcfc;
+  margin: 0;
+  padding: 14px;
+}
+
+.orderForm legend {
+  color: #52635e;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 6px;
+}
+
+.lineItemGrid {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(90px, 0.7fr) minmax(130px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.lineItemGrid > button {
+  margin-bottom: 1px;
+}
+
+.orderSummary {
+  display: grid;
+  width: min(100%, 440px);
+  gap: 8px;
+  border: 1px solid #dde5e7;
+  border-radius: 10px;
+  background: #f8fbfa;
+  padding: 18px;
+}
+
+.orderSummary h3,
+.orderSummary p {
+  margin: 0;
+}
+
+.orderSummary p {
+  display: flex;
+  justify-content: space-between;
+  color: #52635e;
+}
+
+.orderSummary p strong {
+  color: #172a26;
+  font-size: 18px;
+}
+
+.orderSummary small {
+  color: #76868a;
+}
+
 .detailHeader {
   display: flex;
   align-items: flex-end;
@@ -263,20 +389,6 @@
   color: #26394a;
 }
 
-.formCard form > div,
-.formCard fieldset {
-  border: 0;
-}
-
-.formCard fieldset {
-  display: grid;
-  grid-template-columns: 2fr 0.7fr 1fr auto;
-  align-items: end;
-  gap: 12px;
-  margin: 14px 0;
-  padding: 0;
-}
-
 @media (max-width: 760px) {
   .filterCard {
     grid-template-columns: 1fr;
@@ -294,10 +406,14 @@
   .statusBanner {
     grid-template-columns: 1fr;
   }
-  .formCard fieldset {
+  .customerForm,
+  .orderFields {
+    grid-template-columns: 1fr;
+  }
+  .lineItemGrid {
     grid-template-columns: 1fr 1fr;
   }
-  .formCard fieldset legend {
+  .lineItemGrid > .formField:first-child {
     grid-column: 1 / -1;
   }
   .tableCard {

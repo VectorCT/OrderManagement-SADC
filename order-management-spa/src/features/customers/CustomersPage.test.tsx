@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { server } from '../../test/server';
 import { renderWithProviders } from '../../test/helpers';
 import { CustomersPage } from './CustomersPage';
+import { CreateCustomerPage } from './CreateCustomerPage';
 
 describe('CustomersPage', () => {
   it('renders loading, populated, and debounced URL search states', async () => {
@@ -25,7 +26,8 @@ describe('CustomersPage', () => {
     }));
 
     renderWithProviders(<CustomersPage />);
-    const search = screen.getByRole('textbox', { name: 'Search customers' });
+    expect(screen.getByRole('link', { name: 'Add new customer' })).toHaveAttribute('href', '/customers/new');
+    const search = screen.getByRole('textbox', { name: 'Search' });
     await userEvent.type(search, 'Acme');
     await waitFor(() => expect(screen.getByText('Acme')).toBeInTheDocument());
   });
@@ -39,10 +41,7 @@ describe('CustomersPage', () => {
   });
 
   it('shows customer validation errors', async () => {
-    server.use(http.get('/api/customers', () =>
-      HttpResponse.json({ code: 200, message: 'OK', results: { items: [], page: 1, pageSize: 20 }, endpoint: '/api/customers' }),
-    ));
-    renderWithProviders(<CustomersPage />);
+    renderWithProviders(<CreateCustomerPage />);
     await userEvent.clear(screen.getByLabelText('Name'));
     await userEvent.clear(screen.getByLabelText('Email'));
     await userEvent.click(screen.getByRole('button', { name: 'Create customer' }));

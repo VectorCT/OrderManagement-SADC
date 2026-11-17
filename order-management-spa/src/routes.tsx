@@ -7,6 +7,7 @@ import { CustomersPage } from './features/customers/CustomersPage';
 import { OrdersPage } from './features/orders/OrdersPage';
 import { OrderDetailPage } from './features/orders/OrderDetailPage';
 import { CreateOrderPage } from './features/orders/CreateOrderPage';
+import { CreateCustomerPage } from './features/customers/CreateCustomerPage';
 import { RouteErrorBoundary } from './components/RouteErrorBoundary';
 
 export const router = createBrowserRouter([
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <div>Customers and orders</div> },
           { path: '/customers', element: <CustomersPage /> },
+          { path: '/customers/new', element: <CreateCustomerPage /> },
           { path: '/orders', element: <OrdersPage /> },
           { path: '/orders/new', element: <CreateOrderPage /> },
           { path: '/orders/:id', element: <OrderDetailPage /> },

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { searchCustomers } from './api';
-import { CreateCustomerForm } from './CreateCustomerForm';
 import styles from '../workspace.module.css';
 
 export function CustomersPage() {
@@ -13,6 +12,13 @@ export function CustomersPage() {
   const page = Math.max(1, Number(params.get('page') ?? 1) || 1);
   const pageSize = Math.min(100, Math.max(1, Number(params.get('pageSize') ?? 20) || 20));
   const [feedback, setFeedback] = useState('');
+  const location = useLocation();
+
+  useEffect(() => {
+    if ((location.state as { customerCreated?: boolean } | null)?.customerCreated) {
+      setFeedback('Customer created successfully.');
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -56,15 +62,12 @@ export function CustomersPage() {
           <p className={styles.breadcrumb}>Workspace / Customers</p>
           <h1 id="customers-heading">Customers</h1>
         </div>
+        <Link className={styles.primaryButton} to="/customers/new">Add new customer</Link>
       </div>
       <div role="status" aria-live="polite">{feedback}</div>
-      <div className={styles.formCard}>
-        <h2>Add customer</h2>
-        <CreateCustomerForm onCreated={setFeedback} />
-      </div>
-      <div className={styles.filterCard}>
+      <div className={`${styles.filterCard} ${styles.customerFilters}`}>
         <label htmlFor="customer-search">
-          Search customers
+          Search
           <input id="customer-search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} />
         </label>
         <label htmlFor="customer-page-size">
