@@ -9,11 +9,11 @@ This checklist tracks the recommended implementation sequence in the [frontend i
 
 ## Foundation
 
-- [ ] Add the application route structure, shared QueryClient, API client, and error boundary.
-- [ ] API types are generated from Development Swagger and contract drift is detectable.
-- [ ] The API client adds the in-memory bearer token and a per-request correlation ID, disables browser GET caching, and surfaces typed Problem Details.
-- [ ] Development auth supports Read, Write, and Admin roles without local/session storage.
-- [ ] Shared query defaults, route recovery, and provider-aware test helpers are configured.
+- [x] Add the application route structure, shared QueryClient, API client, and error boundary.
+- [x] API types are generated from Development Swagger and contract drift is detectable.
+- [x] The API client adds the in-memory bearer token and a per-request correlation ID, disables browser GET caching, and surfaces typed Problem Details.
+- [x] Development auth supports Read, Write, and Admin roles without local/session storage.
+- [x] Shared query defaults, route recovery, and provider-aware test helpers are configured.
 
 ## Customers
 

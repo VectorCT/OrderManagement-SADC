@@ -1,15 +1,20 @@
+import { Link, Outlet } from 'react-router-dom';
 import styles from './App.module.css';
 
 function App() {
   return (
-    <main className={styles.page}>
-      <p className={styles.eyebrow}>Order Management · SADC</p>
-      <h1>Frontend foundation is ready</h1>
-      <p className={styles.description}>
-        Customer and order workflows will be built here against the
-        OrderManagement API.
-      </p>
-    </main>
+    <div className={styles.app}>
+      <header className={styles.header}>
+        <Link className={styles.brand} to="/">Order Management · SADC</Link>
+        <nav aria-label="Primary navigation">
+          <Link to="/customers">Customers</Link>
+          <Link to="/orders">Orders</Link>
+        </nav>
+      </header>
+      <main className={styles.page}>
+        <Outlet />
+      </main>
+    </div>
   );
 }
 
