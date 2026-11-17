@@ -25,10 +25,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
 
   async function login(email: string, password: string) {
-    const response = await apiFetch<AccessToken>('/api/auth/login', {
+    const response = await apiFetch<AccessToken | null>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+    if (
+      !response ||
+      typeof response.accessToken !== 'string' ||
+      !response.accessToken ||
+      !Array.isArray(response.roles) ||
+      !response.roles.every((role) => typeof role === 'string')
+    ) {
+      throw new Error('The API did not return account roles. Restart the API with the latest version and sign in again.');
+    }
+
     setBearerToken(response.accessToken);
     setToken(response.accessToken);
     setRoles(response.roles);

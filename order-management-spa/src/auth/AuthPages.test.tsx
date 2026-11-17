@@ -55,6 +55,29 @@ describe('Auth pages', () => {
     });
   });
 
+  it('shows an actionable error when the API response is missing roles', async () => {
+    server.use(http.post('/api/auth/login', () => HttpResponse.json({
+      code: 200,
+      message: 'Signed in',
+      results: {
+        accessToken: 'signed-token',
+        tokenType: 'Bearer',
+        expiresAtUtc: '2026-01-01T00:00:00Z',
+        user: { id: 'user-id', email: 'user@example.com', firstName: 'Test', lastName: 'User' },
+      },
+      endpoint: '/api/auth/login',
+    })));
+    renderWithProviders(<LoginPage />);
+    await userEvent.type(screen.getByLabelText('Email address'), 'user@example.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'password');
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The API did not return account roles. Restart the API with the latest version and sign in again.',
+    );
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+  });
+
   it('submits account registration details', async () => {
     let payload: unknown;
     server.use(http.post('/api/auth/register', async ({ request }) => {
