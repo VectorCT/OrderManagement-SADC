@@ -4,7 +4,9 @@
 The project currently includes an initial EF Core migration for the data model:
 
 - `InitialCreate`
+- `20261117112545_AddOrderCreatedOutbox`
 - model coverage for `Customer`, `Order`, `OrderLineItem`, `IdempotencyRecord`, `ProcessedMessage`, and `ApplicationUser`
+- the `OutboxMessage` model for reliable order-created event delivery
 - Identity configuration via `AppDbContext : IdentityDbContext<ApplicationUser>`
 - configuration split across dedicated EF Core configuration classes
 
@@ -34,6 +36,12 @@ dotnet ef migrations script --idempotent \
 dotnet ef database update <PreviousMigrationName> \
   --project DataAccessLayer/DataAccessLayer.csproj \
   --startup-project OrderManagementApi/OrderManagementApi.csproj
+```
+
+Apply the generated additive outbox migration:
+
+```powershell
+dotnet ef database update --project .\DataAccessLayer\DataAccessLayer.csproj --startup-project .\OrderManagementApi\OrderManagementApi.csproj
 ```
 
 ## Zero-downtime rollout strategy

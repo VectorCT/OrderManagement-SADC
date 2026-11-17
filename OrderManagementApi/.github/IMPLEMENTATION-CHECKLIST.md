@@ -24,11 +24,11 @@ This checklist tracks the recommended implementation sequence in the [backend im
 - [x] Add secure error defaults and consistent error response envelopes.
 - [x] Apply consistent one-based pagination with bounded page sizes to the API.
 
-## 4. Messaging and worker flow — Not started
+## 4. Messaging and worker flow — Complete
 
-- [ ] Publish `OrderCreated` events.
-- [ ] Build the worker to consume and fulfill orders.
-- [ ] Include idempotency replay/conflict handling and retry/DLQ handling.
+- [x] Persist `OrderCreated` events in a transactional outbox and publish them to a durable RabbitMQ queue with publisher confirms.
+- [x] Build a separate worker to consume messages and fulfill eligible orders.
+- [x] Deduplicate processed messages and add delayed retries with a durable dead-letter queue.
 
 ## 5. Tests — In progress
 

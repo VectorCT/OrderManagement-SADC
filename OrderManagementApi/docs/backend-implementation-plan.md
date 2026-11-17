@@ -46,7 +46,7 @@ The migration work on this branch includes the initial schema setup for the Data
 2. Add service interfaces and implementations.
 3. Add FluentValidation rules for request shape.
 4. Add API endpoints and authorization policies.
-5. Add messaging and worker flows.
+5. Add messaging and worker flows — Complete.
 6. Generate migrations and validate against SQL Server.
 7. Run integration tests and verify the end-to-end order flow.
 
@@ -57,3 +57,11 @@ No backend feature branch should be committed without verifying:
 - configuration files are scoped to the correct entity
 - Identity and EF integration are still working together
 - migration scripts and rollback steps are documented and tested
+
+## 8. Messaging and worker flow
+
+- Order creation writes an `OrderCreated` event to `OutboxMessages` in the same SQL transaction as the order.
+- The API outbox publisher sends persistent messages with RabbitMQ publisher confirms to the durable `orders.order-created` queue. Failed publishes remain in the outbox and are retried with capped exponential backoff.
+- `OrderManagementWorker` consumes messages with manual acknowledgements. It fulfills Pending or Paid orders and records the message in `ProcessedMessages` in the same database save, so redelivery is safe.
+- Consumer failures are retried after 5 seconds, 30 seconds, and 2 minutes. After those retries the message is rejected to the durable `orders.order-created.dead-letter` queue. The original delivery is acknowledged only after the retry action is accepted.
+- RabbitMQ credentials and database connection strings are supplied through user secrets or environment variables. Apply the outbox migration before running the API or worker.
