@@ -78,13 +78,16 @@ public sealed class AuthenticationService(
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!)
         };
+        var roles = await userManager.GetRolesAsync(user);
+        var roleClaims = roles.Select(role => new Claim(ClaimTypes.Role, role));
+        var allClaims = claims.Concat(roleClaims);
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey)),
             SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             issuer: _jwtOptions.Issuer,
             audience: _jwtOptions.Audience,
-            claims: claims,
+            claims: allClaims,
             notBefore: now,
             expires: expiresAt,
             signingCredentials: credentials);

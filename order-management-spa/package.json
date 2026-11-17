@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "gen:api": "openapi-typescript http://localhost:5145/swagger/v1/swagger.json -o src/api/schema.d.ts",
+    "gen:api:check": "node scripts/check-api-schema.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview"

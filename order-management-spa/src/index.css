@@ -24,3 +24,19 @@ body {
   min-height: 100vh;
   margin: 0;
 }
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+select,
+input {
+  border-radius: 8px;
+}
+
+a {
+  color: #0e6f64;
+}
