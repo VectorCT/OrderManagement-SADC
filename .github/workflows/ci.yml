@@ -23,6 +23,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      - name: Restore API
+        working-directory: ${{ github.workspace }}
+        run: dotnet restore OrderManagementApi/OrderManagementApi.slnx
           cache: true
           cache-dependency-path: OrderManagementApi/**/*.csproj
 
@@ -34,3 +38,72 @@ jobs:
 
       - name: Test solution
         run: dotnet test OrderManagementApi/OrderManagementApi.slnx --configuration Release --no-build --no-restore
+
+  frontend:
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: "Frontend-Ci-Sql-Password-2026!"
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Frontend-Ci-Sql-Password-2026!' -C -Q 'SELECT 1' -b -o /dev/null"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: order-management-spa
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: order-management-spa/package-lock.json
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Start API for contract check
+        shell: bash
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5145
+          ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=OrderManagementDb;User Id=sa;Password=Frontend-Ci-Sql-Password-2026!;Encrypt=True;TrustServerCertificate=True"
+          Jwt__SigningKey: "Frontend-Ci-Signing-Key-At-Least-32-Bytes-Long"
+          SeedData__Enabled: "false"
+        run: |
+          dotnet run --project ../OrderManagementApi/OrderManagementApi/OrderManagementApi.csproj --launch-profile http --no-restore &
+          for i in {1..60}; do
+            if curl -fsS http://localhost:5145/swagger/v1/swagger.json >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Check API contract drift
+        run: npm run gen:api:check
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build

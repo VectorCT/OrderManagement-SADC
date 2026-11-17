@@ -35,3 +35,14 @@ npm run build
 ```
 
 See the implementation plan for architecture, workflow requirements, accessibility expectations, and scope cuts. The development JWT must remain in memory; do not persist it in browser storage.
+
+## Container
+
+Build and run the SPA behind Nginx:
+
+```powershell
+docker build -t order-management-spa .
+docker run --rm -p 8081:80 --add-host=host.docker.internal:host-gateway order-management-spa
+```
+
+The image serves React Router paths and proxies `/api` to the backend service at `order-management-api:8080`.

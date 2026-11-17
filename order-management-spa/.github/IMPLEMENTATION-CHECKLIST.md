@@ -36,11 +36,11 @@ This checklist tracks the recommended implementation sequence in the [frontend i
 
 ## Quality and delivery
 
-- [ ] Labels, error descriptions, invalid state, focus management, live feedback, and keyboard behavior meet the plan.
-- [ ] Status meaning is conveyed with text as well as color; tables have captions and scoped headers.
-- [ ] Vitest/RTL/MSW cover customer validation/list states and order form/status-action behavior.
-- [ ] `npm ci`, lint, type-check, tests with coverage, and production build pass.
-- [ ] Frontend CI runs in `order-management-spa/`; API contract drift is checked.
-- [ ] Container serves SPA routes and proxies `/api` to the backend.
-- [ ] Secrets and tokens are not committed or persisted in browser storage.
-- [ ] Playwright and production MSAL are treated as optional scope, not prerequisites for the MVP.
+- [x] Labels, error descriptions, invalid state, focus management, live feedback, and keyboard behavior meet the plan.
+- [x] Status meaning is conveyed with text as well as color; tables have captions and scoped headers.
+- [x] Vitest/RTL/MSW cover customer validation/list states and order form/status-action behavior.
+- [x] `npm ci`, lint, type-check, tests with coverage, and production build pass.
+- [x] Frontend CI runs in `order-management-spa/`; API contract drift is checked.
+- [x] Container serves SPA routes and proxies `/api` to the backend.
+- [x] Secrets and tokens are not committed or persisted in browser storage.
+- [x] Playwright and production MSAL are treated as optional scope, not prerequisites for the MVP.
