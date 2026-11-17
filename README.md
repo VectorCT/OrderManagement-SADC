@@ -91,3 +91,15 @@ GitHub Actions runs these restore/build/test steps for pushes, pull requests, an
 - `docker-compose.yml` and `.env.example` are for local infrastructure only; Compose requires the environment values and does not provide production deployment configuration.
 
 See [`OrderManagementApi/docs/backend-implementation-plan.md`](OrderManagementApi/docs/backend-implementation-plan.md) for the backend plan and [`OrderManagementApi/docs/MIGRATIONS.md`](OrderManagementApi/docs/MIGRATIONS.md) for migration guidance.
+
+## Frontend
+
+The React and TypeScript application is scaffolded in [`order-management-spa/`](order-management-spa/). See the [frontend implementation plan](order-management-spa/docs/frontend-implementation-plan.md) and [frontend delivery checklist](order-management-spa/.github/IMPLEMENTATION-CHECKLIST.md). To install dependencies and start the Vite development server:
+
+```powershell
+Set-Location .\order-management-spa
+npm ci
+npm run dev
+```
+
+The frontend toolchain and API contract-generation instructions are documented in [`order-management-spa/README.md`](order-management-spa/README.md).
