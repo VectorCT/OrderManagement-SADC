@@ -11,3 +11,15 @@ Create an account with `POST /api/auth/register` using `firstName`, `lastName`, 
 Log in with `POST /api/auth/login` using `email` and `password`. The response contains an `accessToken` and its UTC expiration. Send the token on protected API requests as `Authorization: Bearer <accessToken>`. Access tokens are valid for 60 minutes by default; configure `Jwt:AccessTokenMinutes` from 5 to 1440 minutes to change the lifetime.
 
 New accounts have no order roles. An administrator must assign the appropriate Identity role before the account can use protected routes; successful login alone authenticates the user but does not grant authorization.
+
+### Roles and sample data
+
+The Development environment enables idempotent startup seeding after the EF Core migrations have been applied (`dotnet ef database update`). It creates the `Admin`, `Orders.Read`, `Orders.Write`, and `Orders.Admin` roles, assigns `Admin` to the existing `ctshabalala89@gmail.com` account, and seeds 1,024 demo orders and 16 customers across all 16 SADC countries using currencies permitted by the SADC currency policy. Zimbabwe sample orders include both ZWL and USD. Set `SeedData:Enabled` to `false` to disable seeding, or configure `SeedData:AdminEmail` and `SeedData:SeedOrders` as required. Production seeding is disabled unless explicitly enabled.
+
+Role management is restricted to users with the `Admin` or `Orders.Admin` role:
+
+- `GET /api/roles` lists seeded roles.
+- `GET /api/roles/users/{userId}` returns a user's assigned roles (`GetRolesAsync`).
+- `POST /api/roles/users/{userId}` assigns one or more existing roles; assignments are additive.
+
+Register the designated admin account before starting the API with seeding enabled. If it does not exist, startup logs a warning and continues; register it and restart with seeding enabled to assign the `Admin` role.
