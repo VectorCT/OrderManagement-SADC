@@ -17,6 +17,8 @@ npm run dev
 
 Vite serves the app on its development URL. Set `VITE_API_BASE_URL` when the API is hosted somewhere other than the same origin's `/api` path.
 
+Use `/register` to create an account through the API, then sign in at `/login`. Access tokens remain in memory and are cleared on sign-out or an API `401`; role selection in the development login is a UI mode only, and the API remains authoritative for permissions.
+
 Generate API types from the backend's Development Swagger document:
 
 ```powershell

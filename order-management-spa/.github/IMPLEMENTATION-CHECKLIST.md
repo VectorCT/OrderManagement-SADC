@@ -13,6 +13,7 @@ This checklist tracks the recommended implementation sequence in the [frontend i
 - [x] API types are generated from Development Swagger and contract drift is detectable.
 - [x] The API client adds the in-memory bearer token and a per-request correlation ID, disables browser GET caching, and surfaces typed Problem Details.
 - [x] Development auth supports Read, Write, and Admin roles without local/session storage.
+- [x] Login and registration screens use the API auth endpoints and keep access tokens in memory.
 - [x] Shared query defaults, route recovery, and provider-aware test helpers are configured.
 
 ## Customers

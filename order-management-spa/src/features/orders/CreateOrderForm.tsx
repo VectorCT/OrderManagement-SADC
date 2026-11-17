@@ -6,6 +6,7 @@ import { ApiError } from '../../api/client';
 import { CURRENCY_BY_COUNTRY } from '../../lib/sadc';
 import { createOrder, searchCustomers } from './api';
 import { orderSchema, type OrderFormData } from './schema';
+import styles from '../workspace.module.css';
 
 export function CreateOrderForm() {
   const navigate = useNavigate();
@@ -46,8 +47,8 @@ export function CreateOrderForm() {
   }
 
   return (
-    <section aria-labelledby="create-order-heading">
-      <h2 id="create-order-heading">Create order</h2>
+    <section className={styles.formCard} aria-labelledby="create-order-heading">
+      <h2 id="create-order-heading">Order details</h2>
       <form onSubmit={form.handleSubmit(submit)} noValidate aria-busy={mutation.isPending}>
         <label htmlFor="order-customer">Customer</label>
         <select id="order-customer" {...form.register('customerId')} onChange={(event) => {

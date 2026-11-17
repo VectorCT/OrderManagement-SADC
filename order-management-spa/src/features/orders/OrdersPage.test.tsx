@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { server } from '../../test/server';
 import { renderWithProviders } from '../../test/helpers';
 import { OrdersPage } from './OrdersPage';
+import { CreateOrderPage } from './CreateOrderPage';
 
 describe('OrdersPage', () => {
   it('filters by URL-driven status and displays authoritative server totals', async () => {
@@ -36,7 +37,7 @@ describe('OrdersPage', () => {
         endpoint: '/api/customers',
       })),
     );
-    renderWithProviders(<OrdersPage />);
+    renderWithProviders(<CreateOrderPage />);
     await screen.findByRole('option', { name: 'Cape Town Ltd' });
     await userEvent.selectOptions(screen.getByLabelText('Customer'), '00000000-0000-4000-8000-000000000001');
     expect(screen.getByRole('option', { name: 'ZAR' })).toBeInTheDocument();

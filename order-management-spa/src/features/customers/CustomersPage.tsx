@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { searchCustomers } from './api';
 import { CreateCustomerForm } from './CreateCustomerForm';
+import styles from '../workspace.module.css';
 
 export function CustomersPage() {
   const [params, setParams] = useSearchParams();
@@ -49,19 +50,30 @@ export function CustomersPage() {
   }
 
   return (
-    <section aria-labelledby="customers-heading">
-      <h1 id="customers-heading">Customers</h1>
+    <section className={styles.pageSection} aria-labelledby="customers-heading">
+      <div className={styles.titleRow}>
+        <div>
+          <p className={styles.breadcrumb}>Workspace / Customers</p>
+          <h1 id="customers-heading">Customers</h1>
+        </div>
+      </div>
       <div role="status" aria-live="polite">{feedback}</div>
-
-      <CreateCustomerForm onCreated={setFeedback} />
-
-      <label htmlFor="customer-search">Search customers</label>
-      <input id="customer-search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} />
-      <label htmlFor="customer-page-size">Page size</label>
-      <select id="customer-page-size" value={pageSize} onChange={(event) => changePageSize(Number(event.target.value))}>
-        {[10, 20, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
-      </select>
-
+      <div className={styles.formCard}>
+        <h2>Add customer</h2>
+        <CreateCustomerForm onCreated={setFeedback} />
+      </div>
+      <div className={styles.filterCard}>
+        <label htmlFor="customer-search">
+          Search customers
+          <input id="customer-search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} />
+        </label>
+        <label htmlFor="customer-page-size">
+          Rows
+          <select id="customer-page-size" value={pageSize} onChange={(event) => changePageSize(Number(event.target.value))}>
+            {[10, 20, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+          </select>
+        </label>
+      </div>
       {query.isLoading && <p role="status" aria-busy="true">Loading customers...</p>}
       {query.isError && (
         <div role="alert">
@@ -71,7 +83,7 @@ export function CustomersPage() {
       )}
       {query.isSuccess && query.data.items.length === 0 && <p>No customers found.</p>}
       {query.isSuccess && query.data.items.length > 0 && (
-        <>
+        <div className={styles.tableCard}>
           <table>
             <caption>Customer search results</caption>
             <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Country</th></tr></thead>
@@ -81,12 +93,12 @@ export function CustomersPage() {
               ))}
             </tbody>
           </table>
-          <nav aria-label="Customer pagination">
-            <button type="button" disabled={page <= 1} onClick={() => changePage(page - 1)}>Previous</button>
-            <span>Page {page}</span>
-            <button type="button" disabled={query.data.items.length < pageSize} onClick={() => changePage(page + 1)}>Next</button>
-          </nav>
-        </>
+        <nav className={styles.pagination} aria-label="Customer pagination">
+          <button type="button" disabled={page <= 1} onClick={() => changePage(page - 1)}>Previous</button>
+          <span>Page {page}</span>
+          <button type="button" disabled={query.data.items.length < pageSize} onClick={() => changePage(page + 1)}>Next</button>
+        </nav>
+        </div>
       )}
     </section>
   );

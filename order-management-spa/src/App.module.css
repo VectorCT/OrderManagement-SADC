@@ -1,56 +1,123 @@
 .app {
   min-height: 100vh;
+  background: #f4f7fa;
 }
 
-.header {
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1rem 1.5rem;
-}
-
-.header nav {
-  display: flex;
-  gap: 1rem;
+  width: 220px;
+  flex-direction: column;
+  border-right: 1px solid #dde4e8;
+  background: #fff;
+  padding: 28px 24px;
 }
 
 .brand {
-  color: #176b58;
+  color: #0e6f64;
+  font-size: 20px;
   font-weight: 800;
   text-decoration: none;
+  margin-bottom: 34px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  border-radius: 8px;
+  color: #26394a;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 12px;
+}
+
+.nav a.active {
+  background: #dfeff0;
+  color: #176b58;
+}
+
+.account {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  color: #52635e;
+  font-size: 13px;
+}
+
+.account small,
+.account strong {
+  display: block;
+}
+
+.account strong {
+  color: #26394a;
+  margin-top: 2px;
+}
+
+.account button {
+  grid-column: 1 / -1;
+  border: 0;
+  background: transparent;
+  color: #0e6f64;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 8px 0 0;
+  text-align: left;
+}
+
+.avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #dfeff0;
+  color: #0e6f64;
+  font-weight: 800;
 }
 
 .page {
   box-sizing: border-box;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+  min-height: 100vh;
+  margin-left: 220px;
+  padding: 34px clamp(28px, 5vw, 64px);
 }
 
-.eyebrow {
-  margin: 0 0 1rem;
-  color: #176b58;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.authPage {
+  min-height: 100vh;
 }
 
-.page h1 {
-  max-width: 15ch;
-  margin: 0;
-  color: #172a26;
-  font-size: clamp(2.5rem, 8vw, 4.5rem);
-  letter-spacing: -0.05em;
-  line-height: 1.05;
-}
-
-.description {
-  max-width: 52ch;
-  margin: 1.5rem 0 0;
-  color: #52635e;
-  font-size: 1.125rem;
-  line-height: 1.6;
+@media (max-width: 760px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #dde4e8;
+    padding: 16px;
+  }
+  .brand {
+    margin-bottom: 12px;
+  }
+  .nav {
+    flex-direction: row;
+  }
+  .account {
+    display: none;
+  }
+  .page {
+    margin-left: 0;
+    padding: 24px 16px;
+  }
 }

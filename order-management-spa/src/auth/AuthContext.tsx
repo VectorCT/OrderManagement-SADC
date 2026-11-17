@@ -14,6 +14,7 @@ interface AuthValue {
   token: string | null;
   role: DevelopmentRole | null;
   login: (email: string, password: string, role: DevelopmentRole) => Promise<void>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -33,13 +34,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(requestedRole);
   }
 
+  async function register(firstName: string, lastName: string, email: string, password: string) {
+    await apiFetch<unknown>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ firstName, lastName, email, password }),
+    });
+  }
+
   function logout() {
     setBearerToken(null);
     setToken(null);
     setRole(null);
   }
 
-  const value = useMemo(() => ({ token, role, login, logout }), [token, role]);
+  const value = useMemo(() => ({ token, role, login, register, logout }), [token, role]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
