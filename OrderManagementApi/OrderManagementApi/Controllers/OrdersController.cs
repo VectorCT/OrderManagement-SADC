@@ -1,16 +1,21 @@
 using System.ComponentModel.DataAnnotations;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementApi.Contracts;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
+using OrderManagementApi.Services.Validation;
 
 namespace OrderManagementApi.Controllers;
 
 /// <summary>Creates, queries, and transitions orders.</summary>
 [ApiController]
 [Route("api/orders")]
-public sealed class OrdersController(IOrderService orderService) : ControllerBase
+public sealed class OrdersController(
+    IOrderService orderService,
+    IValidator<CreateOrderRequest> createOrderRequestValidator,
+    IValidator<TransitionOrderStatusRequest> transitionOrderStatusRequestValidator) : ApiControllerBase
 {
     /// <summary>Lists orders with optional customer and status filters.</summary>
     [HttpGet]
@@ -73,21 +78,26 @@ public sealed class OrdersController(IOrderService orderService) : ControllerBas
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Create([FromBody] CreateOrderRequest request, CancellationToken cancellationToken)
-    {
-        var result = await orderService.CreateAsync(request, cancellationToken);
-        if (result.IsFailure)
-        {
-            return ServiceFailure(result.Error);
-        }
+    public Task<IActionResult> Create([FromBody] CreateOrderRequest request, CancellationToken cancellationToken) =>
+        CallValidatedRequestAsync(
+            request,
+            createOrderRequestValidator,
+            async (validatedRequest, ct) =>
+            {
+                var result = await orderService.CreateAsync(validatedRequest, ct);
+                if (result.IsFailure)
+                {
+                    return ServiceFailure(result.Error);
+                }
 
-        var response = ApiResponse.Create(
-            StatusCodes.Status201Created,
-            "Order created successfully.",
-            result.Value,
-            HttpContext);
-        return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, response);
-    }
+                var response = ApiResponse.Create(
+                    StatusCodes.Status201Created,
+                    "Order created successfully.",
+                    result.Value,
+                    HttpContext);
+                return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, response);
+            },
+            cancellationToken);
 
     /// <summary>Transitions an order's status using the required idempotency key.</summary>
     [HttpPut("{id:guid}/status")]
@@ -98,26 +108,35 @@ public sealed class OrdersController(IOrderService orderService) : ControllerBas
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> TransitionStatus(
+    public Task<IActionResult> TransitionStatus(
         Guid id,
         [FromBody] TransitionOrderStatusRequest request,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(idempotencyKey) || idempotencyKey.Trim().Length > 128)
-        {
-            return BadRequest(ApiResponse.Create(
-                StatusCodes.Status400BadRequest,
-                "A non-empty Idempotency-Key header of at most 128 characters is required.",
-                new { idempotencyKey = new[] { "A non-empty key of at most 128 characters is required." } },
-                HttpContext));
-        }
+        CancellationToken cancellationToken) =>
+        CallValidatedRequestAsync(
+            request,
+            transitionOrderStatusRequestValidator,
+            async (validatedRequest, ct) =>
+            {
+                if (string.IsNullOrWhiteSpace(idempotencyKey) || idempotencyKey.Trim().Length > 128)
+                {
+                    return BadRequest(ApiResponse.Create(
+                        StatusCodes.Status400BadRequest,
+                        "A non-empty Idempotency-Key header of at most 128 characters is required.",
+                        new { idempotencyKey = new[] { "A non-empty key of at most 128 characters is required." } },
+                        HttpContext));
+                }
 
-        var result = await orderService.TransitionStatusAsync(id, request.Status, idempotencyKey.Trim(), cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponse.Create(StatusCodes.Status200OK, "Order status updated successfully.", result.Value, HttpContext))
-            : ServiceFailure(result.Error);
-    }
+                var result = await orderService.TransitionStatusAsync(
+                    id,
+                    validatedRequest.Status,
+                    idempotencyKey.Trim(),
+                    ct);
+                return result.IsSuccess
+                    ? Ok(ApiResponse.Create(StatusCodes.Status200OK, "Order status updated successfully.", result.Value, HttpContext))
+                    : ServiceFailure(result.Error);
+            },
+            cancellationToken);
 
     private ObjectResult ServiceFailure(string error)
     {
