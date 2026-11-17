@@ -15,6 +15,7 @@ using OrderManagementApi.Contracts;
 using OrderManagementApi.Middleware;
 using OrderManagementApi.Services;
 using OrderManagementApi.Services.Interfaces;
+using OrderManagementApi.Services.Models;
 using OrderManagementApi.Services.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +23,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = 12;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequireUppercase = true;
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
@@ -31,18 +43,23 @@ builder.Services.AddSingleton<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
 
 var jwtConfiguration = builder.Configuration.GetSection("Jwt");
 var issuer = jwtConfiguration["Issuer"];
 var audience = jwtConfiguration["Audience"];
 var signingKey = jwtConfiguration["SigningKey"];
+var accessTokenMinutes = jwtConfiguration.GetValue<int?>("AccessTokenMinutes") ?? 60;
 if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience) ||
-    string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32)
+    string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32 ||
+    accessTokenMinutes is < 5 or > 1440)
 {
     throw new InvalidOperationException(
-        "JWT issuer, audience, and a signing key of at least 32 bytes must be configured using a trusted configuration provider.");
+        "JWT issuer, audience, a signing key of at least 32 bytes, and an access token lifetime from 5 to 1440 minutes must be configured.");
 }
+
+builder.Services.Configure<JwtAuthenticationOptions>(jwtConfiguration);
 
 builder.Services
     .AddAuthentication(options =>
