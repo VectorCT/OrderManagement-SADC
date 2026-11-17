@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OrderManagementApi.Contracts;
-using OrderManagementApi.Filters;
 using OrderManagementApi.Middleware;
 using OrderManagementApi.Services;
 using OrderManagementApi.Services.Interfaces;
@@ -31,8 +30,8 @@ builder.Services.AddSingleton<ISadcCurrencyPolicy, SadcCurrencyPolicy>();
 builder.Services.AddSingleton<IOrderStateMachine, OrderStateMachine>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
-builder.Services.AddScoped<FluentValidationActionFilter>();
 
 var jwtConfiguration = builder.Configuration.GetSection("Jwt");
 var issuer = jwtConfiguration["Issuer"];
@@ -69,6 +68,27 @@ builder.Services
         };
         options.Events = new JwtBearerEvents
         {
+            OnTokenValidated = async context =>
+            {
+                if (context.Principal is null)
+                {
+                    context.Fail("The token did not contain an authenticated principal.");
+                    return;
+                }
+
+                var authenticatedUserService = context.HttpContext.RequestServices
+                    .GetRequiredService<IAuthenticatedUserService>();
+                var applicationPrincipal = await authenticatedUserService.CreateApplicationPrincipalAsync(
+                    context.Principal,
+                    context.HttpContext.RequestAborted);
+                if (applicationPrincipal is null)
+                {
+                    context.Fail("The token subject does not map to an application user.");
+                    return;
+                }
+
+                context.Principal = applicationPrincipal;
+            },
             OnChallenge = async context =>
             {
                 context.HandleResponse();
@@ -101,7 +121,7 @@ builder.Services.AddAuthorization(options =>
         HasPermission(context.User, "Orders.Admin")));
 });
 
-builder.Services.AddControllers(options => options.Filters.AddService<FluentValidationActionFilter>())
+builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {

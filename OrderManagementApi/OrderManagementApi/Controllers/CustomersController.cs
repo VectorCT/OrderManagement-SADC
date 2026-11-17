@@ -1,16 +1,20 @@
 using System.ComponentModel.DataAnnotations;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderManagementApi.Contracts;
 using OrderManagementApi.Services.Interfaces;
 using OrderManagementApi.Services.Models;
+using OrderManagementApi.Services.Validation;
 
 namespace OrderManagementApi.Controllers;
 
 /// <summary>Creates and queries customer records.</summary>
 [ApiController]
 [Route("api/customers")]
-public sealed class CustomersController(ICustomerService customerService) : ControllerBase
+public sealed class CustomersController(
+    ICustomerService customerService,
+    IValidator<CreateCustomerRequest> createCustomerRequestValidator) : ApiControllerBase
 {
     /// <summary>Searches customers using the standard one-based, bounded pagination scheme.</summary>
     [HttpGet]
@@ -61,21 +65,26 @@ public sealed class CustomersController(ICustomerService customerService) : Cont
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request, CancellationToken cancellationToken)
-    {
-        var result = await customerService.CreateAsync(request, cancellationToken);
-        if (result.IsFailure)
-        {
-            return ServiceFailure(result.Error);
-        }
+    public Task<IActionResult> Create([FromBody] CreateCustomerRequest request, CancellationToken cancellationToken) =>
+        CallValidatedRequestAsync(
+            request,
+            createCustomerRequestValidator,
+            async (validatedRequest, ct) =>
+            {
+                var result = await customerService.CreateAsync(validatedRequest, ct);
+                if (result.IsFailure)
+                {
+                    return ServiceFailure(result.Error);
+                }
 
-        var response = ApiResponse.Create(
-            StatusCodes.Status201Created,
-            "Customer created successfully.",
-            result.Value,
-            HttpContext);
-        return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, response);
-    }
+                var response = ApiResponse.Create(
+                    StatusCodes.Status201Created,
+                    "Customer created successfully.",
+                    result.Value,
+                    HttpContext);
+                return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, response);
+            },
+            cancellationToken);
 
     private ObjectResult ServiceFailure(string error)
     {
