@@ -13,6 +13,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["OrderManagementApi/OrderManagementApi.csproj", "OrderManagementApi/"]
+COPY ["DataAccessLayer/DataAccessLayer.csproj", "DataAccessLayer/"]
+COPY ["Messaging/Messaging.csproj", "Messaging/"]
 RUN dotnet restore "./OrderManagementApi/OrderManagementApi.csproj"
 COPY . .
 WORKDIR "/src/OrderManagementApi"

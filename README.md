@@ -10,24 +10,41 @@ An ASP.NET Core 8 and Entity Framework Core API for SADC-focused customer and or
 
 ## Start local dependencies
 
-From the repository root, create a private Compose environment file and replace the example values with strong local-only credentials:
+From the repository root, create a private Compose environment file and replace the example values with strong local-only credentials. `JWT_SIGNING_KEY` must contain at least 32 bytes:
 
 ```powershell
 Copy-Item .env.example .env
 # Edit .env before starting the services.
-docker compose up -d
+docker compose up -d sqlserver rabbitmq
 docker compose ps
 ```
 
 Compose starts SQL Server 2022 Developer on `localhost:1433` and RabbitMQ on `localhost:5672`; its management UI is at `http://localhost:15672`. The broker user/password come from `.env`. Both services use named volumes, so their data persists across container restarts. Stop the services with `docker compose down`; add `-v` only when intentionally deleting their persisted data.
 
-If host port `1433` is already in use, change `SQLSERVER_HOST_PORT` in your local `.env` to an available port (for example, `1434`) and use that port in the API and worker SQL Server connection strings. The container continues to listen on port `1433` internally.
+If host port `1433` is already in use, change `SQLSERVER_HOST_PORT` in your local `.env` to an available port (for example, `1434`) and use that port in host-side SQL Server connection strings. The container continues to listen on port `1433` internally.
 
-The Compose file supplies infrastructure only. Run the API and worker separately after applying the database migrations.
+## Run the full stack with Compose
+
+The Compose stack also builds and runs the API, worker, and SPA. Apply the database migrations before using the application. Configure the API project's user secrets with a SQL Server connection string to the Compose database (use the `MSSQL_SA_PASSWORD` value from your private `.env` file and the configured `SQLSERVER_HOST_PORT`) and the same JWT signing key as `JWT_SIGNING_KEY` in `.env`, then apply migrations:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=OrderManagementDb;User Id=sa;Password=<your-MSSQL_SA_PASSWORD>;Encrypt=True;TrustServerCertificate=True" --project .\OrderManagementApi\OrderManagementApi\OrderManagementApi.csproj
+dotnet user-secrets set "Jwt:SigningKey" "<your-JWT_SIGNING_KEY>" --project .\OrderManagementApi\OrderManagementApi\OrderManagementApi.csproj
+dotnet ef database update --project .\OrderManagementApi\DataAccessLayer\DataAccessLayer.csproj --startup-project .\OrderManagementApi\OrderManagementApi\OrderManagementApi.csproj
+```
+
+Start the full stack:
+
+```powershell
+docker compose up -d --build
+docker compose ps
+```
+
+Open the SPA at `http://localhost:8081`; it proxies `/api` requests to the API. The API is also available at `http://localhost:5145` and RabbitMQ management at `http://localhost:15672`. Override `API_HOST_PORT` or `WEB_HOST_PORT` in `.env` if those host ports are unavailable. The SQL Server and RabbitMQ credentials and the JWT signing key are injected from `.env`; do not commit that file. For example API calls, use the REST Client requests in [`OrderManagementApi/OrderManagementApi/OrderManagementApi.http`](OrderManagementApi/OrderManagementApi/OrderManagementApi.http).
 
 ## Configure and run the API
 
-The API reads `ConnectionStrings:DefaultConnection`. When using Compose SQL Server on Windows, configure a user secret so the connection string and password stay outside the repository. Use a SQL login with access to `OrderManagementDb` (for example, `orderManagement_user`) and replace the password placeholder below with that login's password. Use `Server=localhost,1433` when the API runs on the host, or `Server=sqlserver,1433` when it runs in the Compose network.
+The API reads `ConnectionStrings:DefaultConnection`. When running the API on the host, configure a user secret so the connection string and password stay outside the repository. Use a SQL login with access to `OrderManagementDb` (for example, `orderManagement_user`) and replace the password placeholder below with that login's password. Use `Server=localhost,1433` when the API runs on the host, or `Server=sqlserver,1433` when it runs in the Compose network.
 
 ```powershell
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=OrderManagementDb;User Id=orderManagement_user;Password=<your-sql-login-password>;Encrypt=True;TrustServerCertificate=True" --project .\OrderManagementApi\OrderManagementApi\OrderManagementApi.csproj
