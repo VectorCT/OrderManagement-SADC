@@ -90,7 +90,7 @@ order-management-spa/
 
 ## Auth and production notes
 
-- In development, obtain a JWT from the API's `/dev/token` endpoint using a Read, Write, or Admin role selection. Keep the token in React state only.
+- Keep access JWTs in React state only. Restore sessions after reload through the API's HttpOnly refresh-cookie endpoint.
 - Document a future `@azure/msal-react` integration (`PublicClientApplication` and `acquireTokenSilent`) in the frontend README; do not implement it in the MVP.
 
 ## Verification and completion gate

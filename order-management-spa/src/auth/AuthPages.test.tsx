@@ -9,10 +9,11 @@ import { LoginPage } from './LoginPage';
 import { RegisterPage } from './RegisterPage';
 
 function AuthRoleProbe() {
-  const { login, roles, isAdmin } = useAuth();
+  const { login, roles, isAdmin, token } = useAuth();
   return (
     <>
       <button type="button" onClick={() => void login('admin@example.com', 'password')}>Sign in</button>
+      <p>{token ? 'Signed in' : 'Signed out'}</p>
       <p>{roles.join(', ')}</p>
       <p>{isAdmin ? 'Administrator' : 'Standard user'}</p>
     </>
@@ -53,6 +54,26 @@ describe('Auth pages', () => {
       expect(screen.getByText('Orders.Admin')).toBeInTheDocument();
       expect(screen.getByText('Administrator')).toBeInTheDocument();
     });
+  });
+
+  it('restores the authenticated session from the HttpOnly refresh-cookie endpoint', async () => {
+    server.use(http.post('/api/auth/refresh', () => HttpResponse.json({
+      code: 200,
+      message: 'Session refreshed.',
+      results: {
+        accessToken: 'restored-token',
+        tokenType: 'Bearer',
+        expiresAtUtc: '2026-01-01T00:00:00Z',
+        user: { id: 'user-id', email: 'admin@example.com', firstName: 'Admin', lastName: 'User' },
+        roles: ['Orders.Admin'],
+      },
+      endpoint: '/api/auth/refresh',
+    })));
+    renderWithProviders(<AuthRoleProbe />);
+
+    expect(await screen.findByText('Signed in')).toBeInTheDocument();
+    expect(screen.getByText('Orders.Admin')).toBeInTheDocument();
+    expect(screen.getByText('Administrator')).toBeInTheDocument();
   });
 
   it('shows an actionable error when the API response is missing roles', async () => {

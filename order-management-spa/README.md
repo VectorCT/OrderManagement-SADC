@@ -17,7 +17,7 @@ npm run dev
 
 Vite serves the app on its development URL. Set `VITE_API_BASE_URL` when the API is hosted somewhere other than the same origin's `/api` path.
 
-Use `/register` to create an account through the API, then sign in at `/login`. Access tokens remain in memory and are cleared on sign-out or an API `401`; role selection in the development login is a UI mode only, and the API remains authoritative for permissions.
+Use `/register` to create an account through the API, then sign in at `/login`. Access tokens remain in memory and are cleared on sign-out or an API `401`. An HttpOnly refresh cookie lets the frontend restore the session after a page reload; sign-out revokes it through the API. Role selection in the development login is a UI mode only, and the API remains authoritative for permissions.
 
 Generate API types from the backend's Development Swagger document:
 
@@ -36,7 +36,7 @@ npm test -- --coverage
 npm run build
 ```
 
-See the implementation plan for architecture, workflow requirements, accessibility expectations, and scope cuts. The development JWT must remain in memory; do not persist it in browser storage.
+See the implementation plan for architecture, workflow requirements, accessibility expectations, and scope cuts. JWTs must remain in memory; do not persist them in browser storage.
 
 ## Container
 

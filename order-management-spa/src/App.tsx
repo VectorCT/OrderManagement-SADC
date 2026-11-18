@@ -1,11 +1,24 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import styles from './App.module.css';
 
 function App() {
   const { token, roles, isAdmin, logout } = useAuth();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  async function handleLogout() {
+    try {
+      await logout();
+      setLogoutError(null);
+    } catch (error) {
+      setLogoutError(error instanceof Error ? error.message : 'Could not complete sign out.');
+    }
+  }
+
   return (
     <div className={styles.app}>
+      {!token && logoutError && <p role="alert">{logoutError}</p>}
       {token ? (
         <>
           <aside className={styles.sidebar}>
@@ -22,7 +35,7 @@ function App() {
                 <small>Signed in as</small>
                 <strong>{roles.length ? roles.join(', ') : 'No roles assigned'}</strong>
               </div>
-              <button type="button" onClick={logout} aria-label="Sign out">Log out</button>
+              <button type="button" onClick={() => void handleLogout()} aria-label="Sign out">Log out</button>
             </div>
           </aside>
           <main className={styles.page}><Outlet /></main>

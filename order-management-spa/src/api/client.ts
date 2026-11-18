@@ -41,6 +41,7 @@ export async function apiFetch<T>(
   const response = await fetch(path, {
     ...init,
     headers,
+    credentials: 'include',
     cache: init.method === 'GET' || !init.method ? 'no-store' : 'default',
   });
 
