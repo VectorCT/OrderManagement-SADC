@@ -110,8 +110,66 @@ public sealed class AuthenticationIntegrationTests(AuthApiFactory factory) : ICl
         Assert.Equal("Email or password is incorrect.", envelope.GetProperty("message").GetString());
     }
 
+    [Fact]
+    public async Task RefreshCookieRotatesAndLogoutRevokesTheSession()
+    {
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+        var email = $"refresh-{Guid.NewGuid():N}@example.com";
+        const string password = "Strong!Password2026";
+        var registration = await client.PostAsync(
+            "/api/auth/register",
+            JsonContent(new { firstName = "Test", lastName = "User", email, password }));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+
+        var login = await client.PostAsync("/api/auth/login", JsonContent(new { email, password }));
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var firstCookie = GetRefreshCookie(login);
+        var loginCookie = login.Headers.GetValues("Set-Cookie").Single();
+        Assert.Contains("HttpOnly", loginCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Secure", loginCookie, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SameSite=Strict", loginCookie, StringComparison.OrdinalIgnoreCase);
+
+        var firstAccessToken = (await ReadEnvelope(login, 200))
+            .GetProperty("results").GetProperty("accessToken").GetString();
+        var refresh = await PostWithCookie(client, "/api/auth/refresh", firstCookie);
+        Assert.Equal(HttpStatusCode.OK, refresh.StatusCode);
+        var secondCookie = GetRefreshCookie(refresh);
+        var secondAccessToken = (await ReadEnvelope(refresh, 200))
+            .GetProperty("results").GetProperty("accessToken").GetString();
+        Assert.NotEqual(firstAccessToken, secondAccessToken);
+
+        var reusedCookie = await PostWithCookie(client, "/api/auth/refresh", firstCookie);
+        Assert.Equal(HttpStatusCode.Unauthorized, reusedCookie.StatusCode);
+        await ReadEnvelope(reusedCookie, 401);
+
+        var logout = await PostWithCookie(client, "/api/auth/logout", secondCookie);
+        Assert.Equal(HttpStatusCode.OK, logout.StatusCode);
+        await ReadEnvelope(logout, 200);
+
+        var afterLogout = await PostWithCookie(client, "/api/auth/refresh", secondCookie);
+        Assert.Equal(HttpStatusCode.Unauthorized, afterLogout.StatusCode);
+        await ReadEnvelope(afterLogout, 401);
+    }
+
     private static StringContent JsonContent<T>(T value) =>
         new(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json");
+
+    private static string GetRefreshCookie(HttpResponseMessage response)
+    {
+        var setCookie = response.Headers.GetValues("Set-Cookie").Single();
+        Assert.StartsWith("__Host-om-refresh=", setCookie, StringComparison.Ordinal);
+        return setCookie.Split(';')[0];
+    }
+
+    private static async Task<HttpResponseMessage> PostWithCookie(
+        HttpClient client,
+        string path,
+        string cookie)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, path);
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        return await client.SendAsync(request);
+    }
 
     private static async Task<JsonElement> ReadEnvelope(HttpResponseMessage response, int statusCode)
     {

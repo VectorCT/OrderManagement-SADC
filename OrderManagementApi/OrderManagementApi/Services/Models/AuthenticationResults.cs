@@ -8,4 +8,4 @@ public sealed record RegistrationResult(
     AuthUserResponse? User,
     IReadOnlyDictionary<string, string[]> Errors);
 
-public sealed record LoginResult(AccessTokenResponse? Token);
+public sealed record LoginResult(AccessTokenResponse? Token, string? RefreshToken);

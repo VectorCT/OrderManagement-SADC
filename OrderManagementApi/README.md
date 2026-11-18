@@ -8,7 +8,9 @@ The API requires JWT configuration before startup. Configure `Jwt:Issuer`, `Jwt:
 
 Create an account with `POST /api/auth/register` using `firstName`, `lastName`, `email`, and `password`. Passwords must contain at least 12 characters, including uppercase and lowercase letters, a number, and a non-alphanumeric character. Registration creates an account but does not issue a token or grant order permissions.
 
-Log in with `POST /api/auth/login` using `email` and `password`. The response contains an `accessToken` and its UTC expiration. Send the token on protected API requests as `Authorization: Bearer <accessToken>`. Access tokens are valid for 60 minutes by default; configure `Jwt:AccessTokenMinutes` from 5 to 1440 minutes to change the lifetime.
+Log in with `POST /api/auth/login` using `email` and `password`. The response contains an `accessToken` and its UTC expiration, and sets a rotating refresh token in an HttpOnly, Secure, SameSite=Strict cookie. Send the access token on protected API requests as `Authorization: Bearer <accessToken>`. Access tokens are valid for 60 minutes by default; configure `Jwt:AccessTokenMinutes` from 5 to 1440 minutes to change the lifetime. The refresh session lasts 14 days by default; configure `Jwt:RefreshTokenDays` from 1 to 90 days.
+
+The SPA calls `POST /api/auth/refresh` during startup to restore a session after a page reload. Refresh tokens are stored hashed in the Identity user-token table and rotated on every refresh. `POST /api/auth/logout` revokes the active refresh token and clears the cookie. The access token remains in frontend memory only.
 
 New accounts have no order roles. An administrator must assign the appropriate Identity role before the account can use protected routes; successful login alone authenticates the user but does not grant authorization.
 

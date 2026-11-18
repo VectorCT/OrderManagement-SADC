@@ -7,4 +7,6 @@ public interface IAuthenticationService
 {
     Task<RegistrationResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken);
     Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
+    Task<LoginResult> RefreshAsync(string? refreshToken, CancellationToken cancellationToken);
+    Task RevokeRefreshTokenAsync(string? refreshToken, CancellationToken cancellationToken);
 }

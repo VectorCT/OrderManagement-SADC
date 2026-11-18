@@ -62,12 +62,13 @@ var issuer = jwtConfiguration["Issuer"];
 var audience = jwtConfiguration["Audience"];
 var signingKey = jwtConfiguration["SigningKey"];
 var accessTokenMinutes = jwtConfiguration.GetValue<int?>("AccessTokenMinutes") ?? 60;
+var refreshTokenDays = jwtConfiguration.GetValue<int?>("RefreshTokenDays") ?? 14;
 if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience) ||
     string.IsNullOrWhiteSpace(signingKey) || Encoding.UTF8.GetByteCount(signingKey) < 32 ||
-    accessTokenMinutes is < 5 or > 1440)
+    accessTokenMinutes is < 5 or > 1440 || refreshTokenDays is < 1 or > 90)
 {
     throw new InvalidOperationException(
-        "JWT issuer, audience, a signing key of at least 32 bytes, and an access token lifetime from 5 to 1440 minutes must be configured.");
+        "JWT issuer, audience, a signing key of at least 32 bytes, an access token lifetime from 5 to 1440 minutes, and a refresh token lifetime from 1 to 90 days must be configured.");
 }
 
 builder.Services.Configure<JwtAuthenticationOptions>(jwtConfiguration);
