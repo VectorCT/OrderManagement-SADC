@@ -97,7 +97,8 @@ public sealed class AuthenticationService(
             accessToken,
             "Bearer",
             expiresAt,
-            ToResponse(user)));
+            ToResponse(user),
+            roles.Order(StringComparer.Ordinal).ToArray()));
     }
 
     private static AuthUserResponse ToResponse(ApplicationUser user) =>

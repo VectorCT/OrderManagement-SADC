@@ -1,19 +1,19 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { apiFetch, setBearerToken } from '../api/client';
 
-export type DevelopmentRole = 'Orders.Read' | 'Orders.Write' | 'Orders.Admin';
-
 interface AccessToken {
   accessToken: string;
   tokenType: string;
   expiresAtUtc: string;
   user: { id: string; email: string; firstName: string; lastName: string };
+  roles: string[];
 }
 
 interface AuthValue {
   token: string | null;
-  role: DevelopmentRole | null;
-  login: (email: string, password: string, role: DevelopmentRole) => Promise<void>;
+  roles: string[];
+  isAdmin: boolean;
+  login: (email: string, password: string) => Promise<void>;
   register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -22,16 +22,26 @@ const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<DevelopmentRole | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
 
-  async function login(email: string, password: string, requestedRole: DevelopmentRole) {
-    const response = await apiFetch<AccessToken>('/api/auth/login', {
+  async function login(email: string, password: string) {
+    const response = await apiFetch<AccessToken | null>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+    if (
+      !response ||
+      typeof response.accessToken !== 'string' ||
+      !response.accessToken ||
+      !Array.isArray(response.roles) ||
+      !response.roles.every((role) => typeof role === 'string')
+    ) {
+      throw new Error('The API did not return account roles. Restart the API with the latest version and sign in again.');
+    }
+
     setBearerToken(response.accessToken);
     setToken(response.accessToken);
-    setRole(requestedRole);
+    setRoles(response.roles);
   }
 
   async function register(firstName: string, lastName: string, email: string, password: string) {
@@ -44,10 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     setBearerToken(null);
     setToken(null);
-    setRole(null);
+    setRoles([]);
   }
 
-  const value = useMemo(() => ({ token, role, login, register, logout }), [token, role]);
+  const isAdmin = roles.includes('Admin') || roles.includes('Orders.Admin');
+  const value = useMemo(() => ({ token, roles, isAdmin, login, register, logout }), [token, roles, isAdmin]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

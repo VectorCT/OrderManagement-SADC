@@ -4,4 +4,5 @@ public sealed record AccessTokenResponse(
     string AccessToken,
     string TokenType,
     DateTime ExpiresAtUtc,
-    AuthUserResponse User);
+    AuthUserResponse User,
+    IReadOnlyList<string> Roles);

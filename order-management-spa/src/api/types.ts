@@ -45,3 +45,31 @@ export interface OrderDetail extends OrderSummary {
   updatedAt: string | null;
 }
 
+export interface AdminUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+  roles: string[];
+}
+
+export interface MessagingDiagnostics {
+  generatedAt: string;
+  ordersCreatedLast24Hours: number;
+  ordersByStatus: { status: string; count: number }[];
+  outbox: {
+    pendingCount: number;
+    retryScheduledCount: number;
+    publishedCount: number;
+    recentMessages: { messageId: string; type: string; createdAt: string; publishedAt: string | null; attempts: number; lastError: string | null }[];
+  };
+  processedMessageCount: number;
+  recentProcessedMessages: { messageId: string; consumer: string; processedAt: string }[];
+  rabbitMq: {
+    isReachable: boolean;
+    error: string | null;
+    queues: { name: string; exists: boolean; readyMessages: number | null; consumers: number | null }[];
+  };
+}
+

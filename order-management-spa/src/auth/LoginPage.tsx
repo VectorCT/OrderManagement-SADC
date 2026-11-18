@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { useAuth, type DevelopmentRole } from './AuthContext';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 import styles from './Auth.module.css';
 
 export function LoginPage() {
@@ -10,7 +9,6 @@ export function LoginPage() {
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<DevelopmentRole>('Orders.Read');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const registered = (location.state as { registered?: boolean } | null)?.registered;
@@ -20,7 +18,7 @@ export function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
-      await login(email, password, role);
+      await login(email, password);
       navigate('/customers', { replace: true });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
@@ -49,14 +47,6 @@ export function LoginPage() {
             <div className={styles.field}>
               <label htmlFor="password">Password</label>
               <input id="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="role">Development role</label>
-              <select id="role" value={role} onChange={(event) => setRole(event.target.value as DevelopmentRole)}>
-                <option value="Orders.Read">Read</option>
-                <option value="Orders.Write">Write</option>
-                <option value="Orders.Admin">Admin</option>
-              </select>
             </div>
             {error && <p className={styles.error} role="alert">{error}</p>}
             <button className={styles.submit} type="submit" disabled={submitting}>{submitting ? 'Signing in...' : 'Sign in'}</button>
